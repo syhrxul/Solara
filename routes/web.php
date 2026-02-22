@@ -10,4 +10,7 @@ Route::get('dashboard', fn () => redirect('/app'));
 
 Route::post('/webpush', [PushSubscriptionController::class, 'store']);
 
+Route::get('/auth/google/redirect', [\App\Http\Controllers\GoogleFitController::class, 'redirect'])->middleware('auth');
+Route::get('/auth/google/callback', [\App\Http\Controllers\GoogleFitController::class, 'callback'])->middleware('auth');
+
 require __DIR__.'/settings.php';

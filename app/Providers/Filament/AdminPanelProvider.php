@@ -59,7 +59,6 @@ class AdminPanelProvider extends PanelProvider
                 TodayScheduleWidget::class,
                 \App\Filament\Widgets\TodayHabitWidget::class,
                 \App\Filament\Widgets\PushNotificationWidget::class,
-                AccountWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
