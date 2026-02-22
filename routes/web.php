@@ -1,13 +1,13 @@
 <?php
 
+use App\Http\Controllers\PushSubscriptionController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+// Redirect root dan semua route lama ke Filament panel
+Route::get('/', fn () => redirect('/app'))->name('home');
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+Route::get('dashboard', fn () => redirect('/app'));
+
+Route::post('/webpush', [PushSubscriptionController::class, 'store']);
 
 require __DIR__.'/settings.php';

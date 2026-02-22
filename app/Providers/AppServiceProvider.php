@@ -2,6 +2,15 @@
 
 namespace App\Providers;
 
+use App\Models\Category;
+use App\Models\ClassAssignment;
+use App\Models\ClassSchedule;
+use App\Models\FinanceTransaction;
+use App\Models\Goal;
+use App\Models\Habit;
+use App\Models\Note;
+use App\Models\Task;
+use App\Observers\UserOwnedObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +33,22 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->registerObservers();
+    }
+
+    /**
+     * Register model observers for auto user_id assignment.
+     */
+    protected function registerObservers(): void
+    {
+        Task::observe(UserOwnedObserver::class);
+        Habit::observe(UserOwnedObserver::class);
+        Note::observe(UserOwnedObserver::class);
+        FinanceTransaction::observe(UserOwnedObserver::class);
+        Goal::observe(UserOwnedObserver::class);
+        Category::observe(UserOwnedObserver::class);
+        ClassSchedule::observe(UserOwnedObserver::class);
+        ClassAssignment::observe(UserOwnedObserver::class);
     }
 
     /**

@@ -3,16 +3,19 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, Notifiable, TwoFactorAuthenticatable, \NotificationChannels\WebPush\HasPushSubscriptions;
 
     /**
      * The attributes that are mass assignable.
@@ -23,6 +26,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'settings',
     ];
 
     /**
@@ -46,8 +50,17 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'          => 'hashed',
+            'settings'          => 'array',
         ];
+    }
+
+    /**
+     * Required by Filament: allow all authenticated users to access the panel.
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return true;
     }
 
     /**
@@ -60,5 +73,36 @@ class User extends Authenticatable
             ->take(2)
             ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
+    }
+
+    // Relationships
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    public function habits(): HasMany
+    {
+        return $this->hasMany(Habit::class);
+    }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(Note::class);
+    }
+
+    public function financeTransactions(): HasMany
+    {
+        return $this->hasMany(FinanceTransaction::class);
+    }
+
+    public function goals(): HasMany
+    {
+        return $this->hasMany(Goal::class);
+    }
+
+    public function categories(): HasMany
+    {
+        return $this->hasMany(Category::class);
     }
 }
