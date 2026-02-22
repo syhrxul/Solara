@@ -21,10 +21,10 @@ self.addEventListener('push', function (event) {
     );
 });
 
-self.addEventListener('notificationclick', function(event) {
+self.addEventListener('notificationclick', function (event) {
     event.notification.close();
     event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clientList) {
             if (event.notification.data && event.notification.data.url) {
                 let client = clientList.find(c => c.url === event.notification.data.url);
                 if (client) {
@@ -35,4 +35,17 @@ self.addEventListener('notificationclick', function(event) {
             }
         })
     );
+});
+
+self.addEventListener('fetch', function (event) {
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            fetch(event.request).catch(function () {
+                return new Response('<html><head><title>📱 Solara Mode Offline</title><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="background:#0f172a;color:#fff;font-family:sans-serif;text-align:center;padding-top:20vh;"><h2>🌙 Anda Sedang Offline</h2><p>Ponsel/laptop tidak terhubung ke jaringan.</p><p>Periksa konektivitas untuk membuka kembali panel kerja produktivitas Anda.</p></body></html>', {
+                    status: 200,
+                    headers: { 'Content-Type': 'text/html' }
+                });
+            })
+        );
+    }
 });

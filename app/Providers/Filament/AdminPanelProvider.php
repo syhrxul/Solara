@@ -20,6 +20,8 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\Facades\Blade;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -30,6 +32,37 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('app')
             ->login()
+            ->favicon(asset('apple-touch-icon.png'))
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => Blade::render('<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#8b5cf6"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => { navigator.serviceWorker.register("/sw.js"); }); }</script>')
+            )
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): string => Blade::render('<script>
+                    let deferredPrompt;
+                    window.addEventListener("beforeinstallprompt", (e) => {
+                        e.preventDefault();
+                        deferredPrompt = e;
+                        
+                        let installBtn = document.getElementById("pwa-install-btn");
+                        if(!installBtn) {
+                            installBtn = document.createElement("button");
+                            installBtn.id = "pwa-install-btn";
+                            installBtn.innerHTML = "⬇️ Install App Solara";
+                            installBtn.style.cssText = "position:fixed; bottom:20px; right:20px; z-index:9999; background:#8b5cf6; color:white; border:none; padding:12px 20px; border-radius:50px; font-weight:bold; box-shadow: 0 4px 6px rgba(0,0,0,0.3); cursor:pointer;";
+                            
+                            installBtn.onclick = async () => {
+                                deferredPrompt.prompt();
+                                const { outcome } = await deferredPrompt.userChoice;
+                                if (outcome === "accepted") { installBtn.remove(); }
+                                deferredPrompt = null;
+                            };
+                            document.body.appendChild(installBtn);
+                        }
+                    });
+                </script>')
+            )
             ->registration()
             ->brandName('☀️ Solara')
             ->colors([
