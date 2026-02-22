@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "calebporzio/sushi": "*",
         "filament/filament": "^5.0",
         "google/apiclient": "*",
         "laravel-notification-channels/webpush": "*",
