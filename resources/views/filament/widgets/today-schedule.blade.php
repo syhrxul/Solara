@@ -9,7 +9,7 @@
         </div>
     </div>
 
-    @php $schedules = $this->getSchedules(); @endphp
+    @php $schedules = $this->scheduleList; @endphp
 
     @if($schedules->isEmpty())
         <div class="text-center py-6 text-gray-400 dark:text-gray-500">

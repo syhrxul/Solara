@@ -44,21 +44,46 @@ class AdminPanelProvider extends PanelProvider
                     window.addEventListener("beforeinstallprompt", (e) => {
                         e.preventDefault();
                         deferredPrompt = e;
-                        
+
+                        // Jangan tampilkan tombol install di halaman login
+                        if (window.location.pathname.includes("/login")) return;
+
                         let installBtn = document.getElementById("pwa-install-btn");
                         if(!installBtn) {
                             installBtn = document.createElement("button");
                             installBtn.id = "pwa-install-btn";
-                            installBtn.innerHTML = "⬇️ Install App Solara";
-                            installBtn.style.cssText = "position:fixed; bottom:20px; right:20px; z-index:9999; background:#8b5cf6; color:white; border:none; padding:12px 20px; border-radius:50px; font-weight:bold; box-shadow: 0 4px 6px rgba(0,0,0,0.3); cursor:pointer;";
-                            
-                            installBtn.onclick = async () => {
+
+                            // Responsive styling
+                            function applyStyles() {
+                                if (window.innerWidth <= 640) {
+                                    installBtn.style.cssText = "position:fixed; bottom:0; left:0; right:0; z-index:50; background:#8b5cf6; color:white; border:none; padding:14px 20px; border-radius:0; font-weight:bold; box-shadow:0 -2px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:14px; text-align:center; width:100%; display:flex; align-items:center; justify-content:center; gap:8px;";
+                                } else {
+                                    installBtn.style.cssText = "position:fixed; bottom:20px; right:20px; z-index:50; background:#8b5cf6; color:white; border:none; padding:12px 20px; border-radius:50px; font-weight:bold; box-shadow:0 4px 6px rgba(0,0,0,0.3); cursor:pointer; font-size:14px; display:flex; align-items:center; gap:8px;";
+                                }
+                            }
+
+                            let label = document.createElement("span");
+                            label.textContent = "⬇️ Install App Solara";
+
+                            let closeBtn = document.createElement("span");
+                            closeBtn.innerHTML = "✕";
+                            closeBtn.style.cssText = "margin-left:8px; opacity:0.7; cursor:pointer; font-size:16px; line-height:1;";
+                            closeBtn.onclick = (ev) => { ev.stopPropagation(); installBtn.remove(); };
+
+                            installBtn.appendChild(label);
+                            installBtn.appendChild(closeBtn);
+
+                            installBtn.onclick = async (ev) => {
+                                if (ev.target === closeBtn) return;
                                 deferredPrompt.prompt();
                                 const { outcome } = await deferredPrompt.userChoice;
                                 if (outcome === "accepted") { installBtn.remove(); }
                                 deferredPrompt = null;
                             };
+
                             document.body.appendChild(installBtn);
+                            applyStyles();
+                            window.addEventListener("resize", applyStyles);
                         }
                     });
                 </script>')
@@ -90,8 +115,6 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 StatsOverviewWidget::class,
                 TodayScheduleWidget::class,
-                \App\Filament\Widgets\TodayHabitWidget::class,
-                \App\Filament\Widgets\PushNotificationWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
