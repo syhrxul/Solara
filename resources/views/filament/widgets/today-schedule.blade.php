@@ -24,7 +24,7 @@
                     $start = \Carbon\Carbon::parse($schedule->waktu_mulai);
                     $end = $schedule->waktu_selesai ? \Carbon\Carbon::parse($schedule->waktu_selesai) : null;
                     $isOngoing = $now->gte($start) && ($end ? $now->lte($end) : true);
-                    $isPast = $end ? $now->gt($end) : $now->gt($start->addHours(2));
+                    $isPast = $end ? $now->gt($end) : $now->gt($start->copy()->addHours(2));
                 @endphp
                 <div class="flex items-start gap-3 p-3 rounded-lg {{ $isOngoing ? 'bg-violet-100 dark:bg-violet-900/40 border border-violet-300 dark:border-violet-700' : ($isPast ? 'bg-gray-50 dark:bg-gray-800/50 opacity-60' : 'bg-white dark:bg-gray-800/80 border border-gray-100 dark:border-gray-700') }} transition-all">
                     <div class="text-center min-w-[60px]">

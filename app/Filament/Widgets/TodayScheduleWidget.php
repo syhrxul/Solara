@@ -40,7 +40,7 @@ class TodayScheduleWidget extends BaseWidget
 
         $hari = $days[now()->format('l')] ?? now()->format('l');
 
-        return "📅 Jadwal Kuliah — {$hari}, " . now()->format('d M Y');
+        return "Jadwal Kuliah — {$hari}, " . now()->format('d M Y');
     }
 
     protected function getTableDescription(): ?string
@@ -60,7 +60,6 @@ class TodayScheduleWidget extends BaseWidget
             ->columns([
                 Tables\Columns\TextColumn::make('waktu_lengkap')
                     ->label('Waktu')
-                    ->icon('heroicon-o-clock')
                     ->badge()
                     ->color(fn (ClassSchedule $record): string => $this->getTimeColor($record))
                     ->sortable(['waktu_mulai']),
@@ -71,8 +70,8 @@ class TodayScheduleWidget extends BaseWidget
                     ->searchable()
                     ->description(fn (ClassSchedule $record): ?string =>
                         collect([
-                            $record->dosen ? "👨‍🏫 {$record->dosen}" : null,
-                            $record->ruangan ? "📍 {$record->ruangan}" : null,
+                            $record->dosen ? $record->dosen : null,
+                            $record->ruangan ? $record->ruangan : null,
                         ])->filter()->implode('  •  ') ?: null
                     ),
 
@@ -88,15 +87,15 @@ class TodayScheduleWidget extends BaseWidget
                     ->color('primary'),
 
                 Tables\Columns\TextColumn::make('status')
-                    ->label('')
+                    ->label('Status')
                     ->state(fn (ClassSchedule $record): string => $this->getStatusLabel($record))
                     ->badge()
                     ->color(fn (ClassSchedule $record): string => $this->getStatusColor($record)),
             ])
             ->paginated(false)
             ->striped()
-            ->emptyStateHeading('Tidak ada kuliah hari ini 🎉')
-            ->emptyStateIcon('heroicon-o-check-circle');
+            ->emptyStateHeading('Tidak ada kuliah hari ini')
+            ->emptyStateDescription('Selamat beristirahat! 🎉');
     }
 
     private function getTimeColor(ClassSchedule $record): string
@@ -106,14 +105,14 @@ class TodayScheduleWidget extends BaseWidget
         $end = $record->waktu_selesai ? Carbon::parse($record->waktu_selesai) : null;
 
         if ($now->gte($start) && ($end ? $now->lte($end) : true)) {
-            return 'success';  // sedang berlangsung
+            return 'success';
         }
 
         if ($end ? $now->gt($end) : $now->gt($start->copy()->addHours(2))) {
-            return 'gray';     // sudah selesai
+            return 'gray';
         }
 
-        return 'info';         // belum mulai
+        return 'info';
     }
 
     private function getStatusLabel(ClassSchedule $record): string
@@ -123,14 +122,14 @@ class TodayScheduleWidget extends BaseWidget
         $end = $record->waktu_selesai ? Carbon::parse($record->waktu_selesai) : null;
 
         if ($now->gte($start) && ($end ? $now->lte($end) : true)) {
-            return '🔴 LIVE';
+            return 'LIVE';
         }
 
         if ($end ? $now->gt($end) : $now->gt($start->copy()->addHours(2))) {
-            return '✅ Selesai';
+            return 'Selesai';
         }
 
-        return '⏳ Upcoming';
+        return 'Upcoming';
     }
 
     private function getStatusColor(ClassSchedule $record): string

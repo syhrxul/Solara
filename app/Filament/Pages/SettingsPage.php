@@ -33,6 +33,7 @@ class SettingsPage extends Page
             'module_finance' => true,
             'module_goals' => true,
             'module_academic' => true,
+            'module_health' => true,
         ];
 
         $userSettings = $user->settings ?? [];
@@ -75,6 +76,11 @@ class SettingsPage extends Page
                         Toggle::make('module_goals')
                             ->label('Goals (Tujuan Kehidupan)')
                             ->helperText('Pelacakan target pencapaian jangka pendek dan panjang.')
+                            ->default(true),
+
+                        Toggle::make('module_health')
+                            ->label('Log Waktu Tidur')
+                            ->helperText('Sinkronisasi dan tracking waktu tidur dari Google Fit.')
                             ->default(true),
                     ])->columns(2),
             ])

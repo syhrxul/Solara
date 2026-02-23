@@ -49,10 +49,10 @@ class HealthDashboard extends Page implements HasTable
         ];
     }
 
-    public static function canViewAny(): bool
+    public static function canAccess(): bool
     {
         $settings = auth()->user()->settings ?? [];
-        return $settings['module_habits'] ?? true;
+        return $settings['module_health'] ?? true;
     }
 
     public function mount()

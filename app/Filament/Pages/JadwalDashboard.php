@@ -24,6 +24,12 @@ class JadwalDashboard extends Page implements HasTable
     protected static ?string $title = 'Jadwal & Cuaca Harian';
     protected string $view = 'filament.pages.jadwal-dashboard';
 
+    public static function canAccess(): bool
+    {
+        $settings = auth()->user()->settings ?? [];
+        return $settings['module_health'] ?? true;
+    }
+
     public $activeLocation = 'Sleman';
 
     public function mount()
