@@ -40,7 +40,7 @@ class HealthDashboard extends Page implements HasTable
 
         $expiresAt = Carbon::parse($tokenExp);
         if ($expiresAt->isPast()) {
-            return "⚠️ Token akses sesi terakhirmy habis " . $expiresAt->diffForHumans() . ". Sistem akan otomatis menggunakan Refresh Token saat sinkronisasi.";
+            return "⚠️ Token akses sesi terakhir habis " . $expiresAt->diffForHumans() . ". Sistem akan otomatis menggunakan Refresh Token saat sinkronisasi.";
         }
 
         return "✅ Google Fit aktif. Token akses sesi habis " . $expiresAt->diffForHumans() . " (" . $expiresAt->format('H:i') . "). Perpanjangan otomatis aktif.";
@@ -127,8 +127,7 @@ class HealthDashboard extends Page implements HasTable
         $user = auth()->user();
 
         try {
-            // Hapus semua log tidur lama agar tidak dobel dengan query yang baru
-            HealthMetric::where('user_id', $user->id)->where('type', 'sleep')->delete();
+            // Remove the inefficient bulk delete. We will use updateOrCreate to cache efficiently to SSD.
 
             $sessionsResponse = Http::withToken($token)
                 ->get('https://www.googleapis.com/fitness/v1/users/me/sessions', [
@@ -175,7 +174,7 @@ class HealthDashboard extends Page implements HasTable
                         }
                     }
 
-                    // Tulis Setiap Sesi ke Database Tanpa Overwrite
+                    // Tulis Setiap Sesi ke Database Tanpa Overwrite yang menghancurkan Cache Lama
                     foreach ($mergedIntervals as $merged) {
                         $startC = Carbon::createFromTimestampMs($merged['start'])->timezone('Asia/Jakarta');
                         $endC = Carbon::createFromTimestampMs($merged['end'])->timezone('Asia/Jakarta');
@@ -189,17 +188,15 @@ class HealthDashboard extends Page implements HasTable
                             'time_bed' => $startC->format('H:i'),
                             'time_wakeup' => $endC->format('H:i'),
                             'score' => $durationHours >= 7 ? 'Sangat Baik' : ($durationHours >= 5 ? 'Cukup' : 'Kurang'),
-                            'start_timestamp' => $merged['start'], // Penanda Unik
+                            'start_timestamp' => $merged['start'], 
                             'end_timestamp' => $merged['end']
                         ];
 
-                        HealthMetric::create([
-                            'user_id' => $user->id, 
-                            'date' => $dateLabel, 
-                            'type' => 'sleep',
-                            'value' => $durationHours, 
-                            'details' => $sleepDetails
-                        ]);
+                        // Gunakan updateOrCreate menggunakan primary keys 'user_id', 'date', dan 'type' agar berlaku sebagai caching layer pada SSD MariaDB
+                        HealthMetric::updateOrCreate(
+                            ['user_id' => $user->id, 'date' => $dateLabel, 'type' => 'sleep'],
+                            ['value' => $durationHours, 'details' => collect($sleepDetails)->toJson()]
+                        );
                     }
                 }
             }
