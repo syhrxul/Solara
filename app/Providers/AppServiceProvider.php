@@ -35,8 +35,8 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->registerObservers();
 
-        // Paksa HTTPS di semua environment selain local (mengatasi Cloudflare/Nginx Proxy SSL Penuh)
-        if (config('app.env') !== 'local') {
+        // Paksa HTTPS di semua environment selain localhost/herd .test
+        if (!str_contains(request()->getHost(), 'localhost') && !str_contains(request()->getHost(), '.test')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
     }
