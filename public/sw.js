@@ -37,7 +37,18 @@ self.addEventListener('notificationclick', function (event) {
     );
 });
 
+// Network-first strategy: always try network, only fallback to offline page
 self.addEventListener('fetch', function (event) {
+    // Skip non-GET requests (Livewire POST requests etc.)
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
+    // Skip Livewire update requests
+    if (event.request.url.includes('/livewire')) {
+        return;
+    }
+
     if (event.request.mode === 'navigate') {
         event.respondWith(
             fetch(event.request).catch(function () {
@@ -48,4 +59,26 @@ self.addEventListener('fetch', function (event) {
             })
         );
     }
+});
+
+// Force update: when a new SW is installed, activate immediately
+self.addEventListener('install', function (event) {
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', function (event) {
+    event.waitUntil(
+        Promise.all([
+            // Take control of all clients immediately
+            self.clients.claim(),
+            // Clear any old caches
+            caches.keys().then(function (cacheNames) {
+                return Promise.all(
+                    cacheNames.map(function (cacheName) {
+                        return caches.delete(cacheName);
+                    })
+                );
+            })
+        ])
+    );
 });

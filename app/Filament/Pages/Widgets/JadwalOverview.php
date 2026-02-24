@@ -6,31 +6,43 @@ use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
-
 use Livewire\Attributes\On;
 
 class JadwalOverview extends BaseWidget
 {
-    public $activeLocation = 'Sleman';
+    public array $activeLocation = [];
     public $weatherData = [];
     public $hijriDate = '';
 
-    #[On('location-changed')]
-    public function updateLocation($location)
+    public function mount()
     {
-        $this->activeLocation = $location;
+        $settings = auth()->user()->settings ?? [];
+        $this->activeLocation = $settings['jadwal_location'] ?? [
+            'name' => 'Sleman',
+            'lat'  => -7.71556,
+            'lng'  => 110.35556,
+        ];
     }
 
-    protected function getStats(): array
+    #[On('location-changed')]
+    public function updateLocation()
     {
-        // 1. Dapatkan kordinat
-        $locations = [
-            'Sleman' => ['lat' => -7.71556, 'lng' => 110.35556],
-            'Purbalingga' => ['lat' => -7.3885, 'lng' => 109.3639],
+        // Reload from settings to get the newest selected location
+        $settings = auth()->user()->settings ?? [];
+        $this->activeLocation = $settings['jadwal_location'] ?? [
+            'name' => 'Sleman',
+            'lat'  => -7.71556,
+            'lng'  => 110.35556,
         ];
+        
+        // Reload data
+        $this->getData();
+    }
 
-        $lat = $locations[$this->activeLocation]['lat'] ?? $locations['Sleman']['lat'];
-        $lng = $locations[$this->activeLocation]['lng'] ?? $locations['Sleman']['lng'];
+    protected function getData()
+    {
+        $lat = $this->activeLocation['lat'] ?? -7.71556;
+        $lng = $this->activeLocation['lng'] ?? 110.35556;
 
         // 2. Ambil Info Cuaca
         try {
@@ -64,6 +76,13 @@ class JadwalOverview extends BaseWidget
         } catch (\Exception $e) {
             $this->hijriDate = '-';
         }
+    }
+
+    protected function getStats(): array
+    {
+        if (empty($this->weatherData) || empty($this->hijriDate)) {
+            $this->getData();
+        }
 
         $temp = $this->weatherData['temperature_2m'] ?? '--';
         $hum = $this->weatherData['relative_humidity_2m'] ?? '--';
@@ -76,14 +95,16 @@ class JadwalOverview extends BaseWidget
         if (in_array($code, [95,96,99])) { $weatherDesc = 'Badai Petir'; $color = 'danger'; }
         if (in_array($code, [2,3,45,48])) { $weatherDesc = 'Berawan'; $color = 'gray'; }
 
+        $cityName = $this->activeLocation['name'] ?? 'Sleman';
+
         return [
             Stat::make('Cuaca Hari Ini', "{$temp}°C")
-                ->description("{$weatherDesc} (Kelembapan {$hum}%)")
+                ->description("{$weatherDesc} (Klp {$hum}%) - {$cityName}")
                 ->color($color),
             Stat::make('Kalender Islam', $this->hijriDate)
                 ->description(Carbon::now('Asia/Jakarta')->translatedFormat('l, d F Y'))
                 ->color('success'),
-            Stat::make('Wilayah Pantauan', "Kab. {$this->activeLocation}")
+            Stat::make('Wilayah Pantauan', "Lokasi: {$cityName}")
                 ->description("Sumber: BMKG / OpenMeteo")
                 ->color('warning'),
         ];

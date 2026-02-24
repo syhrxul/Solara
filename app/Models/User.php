@@ -27,6 +27,7 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'settings',
+        'telegram_chat_id',
         'google_access_token',
         'google_refresh_token',
         'google_token_expires_at',

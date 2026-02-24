@@ -32,10 +32,11 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('app')
             ->login()
+            ->profile(isSimple: false)
             ->favicon(asset('apple-touch-icon.png'))
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn (): string => Blade::render('<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#8b5cf6"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => { navigator.serviceWorker.register("/sw.js"); }); }</script>')
+                fn (): string => Blade::render('<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#8b5cf6"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => { navigator.serviceWorker.register("/sw.js?v=' . time() . '"); }); }</script>')
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
@@ -56,9 +57,9 @@ class AdminPanelProvider extends PanelProvider
                             // Responsive styling
                             function applyStyles() {
                                 if (window.innerWidth <= 640) {
-                                    installBtn.style.cssText = "position:fixed; bottom:0; left:0; right:0; z-index:50; background:#8b5cf6; color:white; border:none; padding:14px 20px; border-radius:0; font-weight:bold; box-shadow:0 -2px 10px rgba(0,0,0,0.2); cursor:pointer; font-size:14px; text-align:center; width:100%; display:flex; align-items:center; justify-content:center; gap:8px;";
+                                    installBtn.style.cssText = "position:fixed; bottom:16px; left:16px; right:16px; z-index:40; background:#8b5cf6; color:white; border:none; padding:12px 16px; border-radius:12px; font-weight:bold; box-shadow:0 4px 12px rgba(0,0,0,0.3); cursor:pointer; font-size:14px; text-align:center; width:auto; display:flex; align-items:center; justify-content:center; gap:8px;";
                                 } else {
-                                    installBtn.style.cssText = "position:fixed; bottom:20px; right:20px; z-index:50; background:#8b5cf6; color:white; border:none; padding:12px 20px; border-radius:50px; font-weight:bold; box-shadow:0 4px 6px rgba(0,0,0,0.3); cursor:pointer; font-size:14px; display:flex; align-items:center; gap:8px;";
+                                    installBtn.style.cssText = "position:fixed; bottom:20px; right:20px; z-index:40; background:#8b5cf6; color:white; border:none; padding:12px 20px; border-radius:50px; font-weight:bold; box-shadow:0 4px 6px rgba(0,0,0,0.3); cursor:pointer; font-size:14px; display:flex; align-items:center; gap:8px;";
                                 }
                             }
 
