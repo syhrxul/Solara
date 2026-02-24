@@ -13,4 +13,6 @@ Route::post('/webpush', [PushSubscriptionController::class, 'store']);
 Route::get('/auth/google/redirect', [\App\Http\Controllers\GoogleFitController::class, 'redirect'])->middleware('auth');
 Route::get('/auth/google/callback', [\App\Http\Controllers\GoogleFitController::class, 'callback'])->middleware('auth');
 
+Route::post('/webhook/telegram', [\App\Http\Controllers\TelegramWebhookController::class, 'handle']);
+
 require __DIR__.'/settings.php';

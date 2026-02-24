@@ -19,7 +19,7 @@ class TelegramService
     /**
      * Send a text message to a Telegram chat.
      */
-    public function sendMessage(string $chatId, string $message, ?string $parseMode = 'HTML'): bool
+    public function sendMessage(string $chatId, string $message, ?string $parseMode = 'HTML', ?array $replyMarkup = null): bool
     {
         if (empty($this->botToken) || empty($chatId)) {
             Log::warning('Telegram: Bot token or chat ID is empty.');
@@ -27,11 +27,17 @@ class TelegramService
         }
 
         try {
-            $response = Http::post("{$this->apiUrl}/sendMessage", [
+            $payload = [
                 'chat_id'    => $chatId,
                 'text'       => $message,
                 'parse_mode' => $parseMode,
-            ]);
+            ];
+
+            if ($replyMarkup) {
+                $payload['reply_markup'] = json_encode($replyMarkup);
+            }
+
+            $response = Http::post("{$this->apiUrl}/sendMessage", $payload);
 
             if ($response->successful() && $response->json('ok')) {
                 return true;
@@ -41,6 +47,21 @@ class TelegramService
             return false;
         } catch (\Exception $e) {
             Log::error('Telegram Service Error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Set a webhook for Telegram bot.
+     */
+    public function setWebhook(string $url): bool
+    {
+        if (empty($this->botToken)) return false;
+
+        try {
+            $response = Http::post("{$this->apiUrl}/setWebhook", ['url' => $url]);
+            return $response->successful() && $response->json('ok');
+        } catch (\Exception $e) {
             return false;
         }
     }
