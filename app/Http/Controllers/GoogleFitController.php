@@ -14,8 +14,11 @@ class GoogleFitController extends Controller
         $client->setClientId(env('GOOGLE_CLIENT_ID'));
         $client->setClientSecret(env('GOOGLE_CLIENT_SECRET'));
         
-        // Menggunakan URL dinamis agar jalan di VPS (gate.syhrulimtkhan.my.id) maupun localhost
-        $client->setRedirectUri(url('/auth/google/callback'));
+        // Membaca domain dari APP_URL, dan secara ketat menggunakan awalan https:// untuk Production. 
+        // Kenapa? Karena Google OAuth 2.0 menolak redirect URI dengan protokol HTTP.
+        $baseUrl = config('app.env') === 'local' ? url('/auth/google/callback') : 'https://gate.syhrulimtkhan.my.id/auth/google/callback';
+        $client->setRedirectUri($baseUrl);
+
         
         // Scope untuk Langkah, Kalori, Tidur, dan Oksigen Tubuh
         $client->addScope([
