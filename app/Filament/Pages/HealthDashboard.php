@@ -25,6 +25,27 @@ class HealthDashboard extends Page implements HasTable
     protected static ?string $title = 'Log Waktu Tidur';
     protected string $view = 'filament.pages.health-dashboard';
 
+    public function getSubheading(): ?string
+    {
+        $user = auth()->user();
+        $tokenExp = $user->google_token_expires_at;
+
+        if (!$user->google_access_token) {
+            return "❌ Google Fit belum tertaut. Silakan klik 'Perbarui Izin Akses'.";
+        }
+
+        if (!$tokenExp) {
+            return "✅ Terhubung ke Google Fit, namun masa aktif token tidak diketahui.";
+        }
+
+        $expiresAt = Carbon::parse($tokenExp);
+        if ($expiresAt->isPast()) {
+            return "⚠️ Token akses sesi terakhirmy habis " . $expiresAt->diffForHumans() . ". Sistem akan otomatis menggunakan Refresh Token saat sinkronisasi.";
+        }
+
+        return "✅ Google Fit aktif. Token akses sesi habis " . $expiresAt->diffForHumans() . " (" . $expiresAt->format('H:i') . "). Perpanjangan otomatis aktif.";
+    }
+
     protected function getHeaderActions(): array
     {
         return [
