@@ -36,7 +36,45 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('apple-touch-icon.png'))
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn (): string => Blade::render('<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#8b5cf6"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><script>if ("serviceWorker" in navigator) { navigator.serviceWorker.getRegistrations().then(function(registrations) { for(let registration of registrations) { if(registration.active && registration.active.scriptURL.includes("?v=")) { registration.unregister(); } } }); window.addEventListener("load", () => { navigator.serviceWorker.register("/sw.js"); }); }</script>')
+                fn (): string => Blade::render('
+                    <!-- SEO Meta Tags -->
+                    <meta name="description" content="Solara - Aplikasi Dashboard Produktivitas & Manajemen Waktu Modern. Kelola jadwal, keuangan, dan rutinitas ibadah harian Anda secara mudah.">
+                    <meta name="keywords" content="Produktivitas, Solara, Manajemen Waktu, Jadwal Sholat, Aplikasi Manajemen, Web PWA">
+                    <meta name="author" content="Solara Team">
+                    <!-- Open Graph / Facebook -->
+                    <meta property="og:type" content="website">
+                    <meta property="og:url" content="{{ config(\'app.url\') }}">
+                    <meta property="og:title" content="Solara - Dashboard Produktivitas & Manajemen Waktu">
+                    <meta property="og:description" content="Kelola jadwal, keuangan, tugas, dan rutinitas ibadah Anda dalam satu sentuhan. Cepat, aman, dan tanpa iklan.">
+                    <meta property="og:image" content="{{ asset(\'apple-touch-icon.png\') }}">
+                    <!-- Twitter -->
+                    <meta property="twitter:card" content="summary_large_image">
+                    <meta property="twitter:url" content="{{ config(\'app.url\') }}">
+                    <meta property="twitter:title" content="Solara - Dashboard Produktivitas">
+                    <meta property="twitter:description" content="Kelola jadwal, keuangan, tugas, dan rutinitas ibadah Anda dalam satu sentuhan.">
+                    <meta property="twitter:image" content="{{ asset(\'apple-touch-icon.png\') }}">
+
+                    <!-- PWA Meta Tags -->
+                    <link rel="manifest" href="/manifest.json">
+                    <meta name="theme-color" content="#8b5cf6">
+                    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+                    <meta name="apple-mobile-web-app-capable" content="yes">
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+                    <script>
+                        if ("serviceWorker" in navigator) { 
+                            navigator.serviceWorker.getRegistrations().then(function(registrations) { 
+                                for(let registration of registrations) { 
+                                    if(registration.active && registration.active.scriptURL.includes("?v=")) { 
+                                        registration.unregister(); 
+                                    } 
+                                } 
+                            }); 
+                            window.addEventListener("load", () => { 
+                                navigator.serviceWorker.register("/sw.js"); 
+                            }); 
+                        }
+                    </script>
+                ')
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
@@ -90,7 +128,7 @@ class AdminPanelProvider extends PanelProvider
                 </script>')
             )
             ->registration()
-            ->brandName('☀️ Solara')
+            ->brandName('Solara')
             ->colors([
                 'primary'  => Color::Violet,
                 'gray'     => Color::Slate,

@@ -1,0 +1,19 @@
+#!/usr/bin/expect -f
+spawn ssh -o StrictHostKeyChecking=no arul@192.168.18.27
+expect "password:"
+send "arul\r"
+expect "$ "
+send "sudo git config --global --add safe.directory /var/www/solara\r"
+expect "password for arul:"
+send "arul\r"
+expect "$ "
+send "cd /var/www/solara && sudo git remote set-url origin https://github.com/syhrxul/Solara.git\r"
+expect "$ "
+send "sudo git pull origin main\r"
+expect "$ "
+send "sudo php artisan optimize:clear\r"
+expect "$ "
+send "sudo systemctl restart php8.4-fpm\r"
+expect "$ "
+send "exit\r"
+interact
