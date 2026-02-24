@@ -61,7 +61,8 @@ class GoalForm
                     Grid::make(2)->schema([
                         TextInput::make('icon')
                             ->label('Icon')
-                            ->placeholder('heroicon-o-flag')
+                            ->default('heroicon-o-flag')
+                            ->required()
                             ->helperText('Nama icon Heroicon'),
 
                         ColorPicker::make('color')
