@@ -139,7 +139,7 @@ class JadwalDashboard extends Page implements HasTable
         $user->update(['settings' => $settings]);
 
         $this->loadPrayerTimes();
-        $this->dispatch('location-changed')->to(\App\Filament\Pages\Widgets\JadwalOverview::class);
+        $this->dispatch('location-changed')->to(\App\Filament\Widgets\JadwalOverview::class);
     }
 
     public function searchAndSetLocation(string $city)
@@ -194,7 +194,7 @@ class JadwalDashboard extends Page implements HasTable
     protected function getHeaderWidgets(): array
     {
         return [
-            \App\Filament\Pages\Widgets\JadwalOverview::class,
+            \App\Filament\Widgets\JadwalOverview::class,
         ];
     }
 

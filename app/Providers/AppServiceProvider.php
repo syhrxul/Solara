@@ -34,6 +34,11 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->registerObservers();
+
+        // Fix Mixed Content Livewire error on Production (forcing HTTPS)
+        if (str_starts_with(config('app.url'), 'https://')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
     }
 
     /**

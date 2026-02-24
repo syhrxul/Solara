@@ -36,7 +36,7 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('apple-touch-icon.png'))
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn (): string => Blade::render('<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#8b5cf6"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><script>if ("serviceWorker" in navigator) { window.addEventListener("load", () => { navigator.serviceWorker.register("/sw.js?v=' . time() . '"); }); }</script>')
+                fn (): string => Blade::render('<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#8b5cf6"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><script>if ("serviceWorker" in navigator) { navigator.serviceWorker.getRegistrations().then(function(registrations) { for(let registration of registrations) { if(registration.active && registration.active.scriptURL.includes("?v=")) { registration.unregister(); } } }); window.addEventListener("load", () => { navigator.serviceWorker.register("/sw.js"); }); }</script>')
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
