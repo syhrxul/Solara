@@ -15,4 +15,10 @@ Route::get('/auth/google/callback', [\App\Http\Controllers\GoogleFitController::
 
 Route::post('/webhook/telegram', [\App\Http\Controllers\TelegramWebhookController::class, 'handle']);
 
+Route::get('/test-webhook', function () {
+    $token = config('services.telegram.bot_token');
+    $response = \Illuminate\Support\Facades\Http::get("https://api.telegram.org/bot{$token}/getWebhookInfo");
+    return response()->json($response->json());
+});
+
 require __DIR__.'/settings.php';
