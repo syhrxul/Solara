@@ -36,7 +36,7 @@ class HealthDashboard extends Page implements HasTable
             Action::make('reconnect')
                 ->label('Perbarui Izin Akses')
                 ->icon('heroicon-o-key')
-                ->url('http://localhost:8000/auth/google/redirect')
+                ->url(url('/auth/google/redirect'))
                 ->color('warning'),
         ];
     }
