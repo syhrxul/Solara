@@ -37,18 +37,44 @@ self.addEventListener('notificationclick', function (event) {
     );
 });
 
-// Network-first strategy: always try network, only fallback to offline page
+const CACHE_NAME = 'solara-static-v1';
+const STATIC_ASSETS = [
+    '/manifest.json',
+    '/apple-touch-icon.png',
+    '/favicon.ico'
+];
+
+// Network-first strategy for navigation, Stale-while-revalidate for static assets
 self.addEventListener('fetch', function (event) {
-    // Skip non-GET requests (Livewire POST requests etc.)
-    if (event.request.method !== 'GET') {
+    if (event.request.method !== 'GET') return;
+    if (event.request.url.includes('/livewire')) return;
+
+    const url = new URL(event.request.url);
+
+    // 1. Caching JS, CSS, Images, Fonts (Stale-While-Revalidate)
+    if (
+        url.pathname.match(/\.(css|js|png|jpg|jpeg|svg|woff2|woff|ttf)$/) ||
+        url.hostname.includes('fonts.googleapis.com') ||
+        url.hostname.includes('fonts.gstatic.com')
+    ) {
+        event.respondWith(
+            caches.match(event.request).then(function (cachedResponse) {
+                const fetchPromise = fetch(event.request).then(function (networkResponse) {
+                    caches.open(CACHE_NAME).then(function (cache) {
+                        cache.put(event.request, networkResponse.clone());
+                    });
+                    return networkResponse;
+                }).catch(function () {
+                    // Fail silently for static assets offline
+                });
+
+                return cachedResponse || fetchPromise;
+            })
+        );
         return;
     }
 
-    // Skip Livewire update requests
-    if (event.request.url.includes('/livewire')) {
-        return;
-    }
-
+    // 2. Network-first for HTML pages (Fallback Offline Screen)
     if (event.request.mode === 'navigate') {
         event.respondWith(
             fetch(event.request).catch(function () {
