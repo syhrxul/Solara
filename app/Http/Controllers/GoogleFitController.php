@@ -14,8 +14,8 @@ class GoogleFitController extends Controller
         $client->setClientId(env('GOOGLE_CLIENT_ID'));
         $client->setClientSecret(env('GOOGLE_CLIENT_SECRET'));
         
-        // Memaksa redirectUri menggunakan nilai yg dipatok di Google Console agar tidak error
-        $client->setRedirectUri('http://localhost:8000/auth/google/callback');
+        // Menggunakan URL dinamis agar jalan di VPS (gate.syhrulimtkhan.my.id) maupun localhost
+        $client->setRedirectUri(url('/auth/google/callback'));
         
         // Scope untuk Langkah, Kalori, Tidur, dan Oksigen Tubuh
         $client->addScope([
@@ -42,6 +42,7 @@ class GoogleFitController extends Controller
             $token = $client->fetchAccessTokenWithAuthCode($request->get('code'));
             
             if (!isset($token['error'])) {
+                /** @var \App\Models\User $user */
                 $user = auth()->user();
                 $user->update([
                     'google_access_token' => $token['access_token'],
@@ -51,7 +52,7 @@ class GoogleFitController extends Controller
             }
         }
 
-        // Redirect kembali ke halaman utama sesudah login sukses. Set agar kembali ke versi https/http herd.
-        return redirect('https://solara.test/app');
+        // Redirect kembali ke Filament Dashboard
+        return redirect(url('/app'));
     }
 }
