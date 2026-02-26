@@ -29,6 +29,18 @@ class MonthlyBudgetsTable
                     ->money('IDR')
                     ->sortable(),
 
+                TextColumn::make('spent')
+                    ->label('Terpakai')
+                    ->money('IDR')
+                    ->sortable(false),
+
+                TextColumn::make('remaining')
+                    ->label('Sisa')
+                    ->money('IDR')
+                    ->state(fn ($record) => $record->amount - $record->spent)
+                    ->color(fn ($state) => $state < 0 ? 'danger' : 'success')
+                    ->sortable(false),
+
                 TextColumn::make('notes')
                     ->label('Catatan')
                     ->limit(30)

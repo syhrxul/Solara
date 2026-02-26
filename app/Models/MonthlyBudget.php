@@ -25,4 +25,16 @@ class MonthlyBudget extends Model
     {
         return $this->belongsTo(Category::class);
     }
+
+    public function getSpentAttribute(): float
+    {
+        $startDate = $this->month_year . '-01';
+        $endDate = \Carbon\Carbon::parse($startDate)->endOfMonth()->format('Y-m-d');
+
+        return \App\Models\FinanceTransaction::where('user_id', $this->user_id)
+            ->where('category_id', $this->category_id)
+            ->where('type', 'expense')
+            ->whereBetween('transaction_date', [$startDate, $endDate])
+            ->sum('amount');
+    }
 }
