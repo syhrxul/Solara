@@ -46,7 +46,7 @@ class FinanceTransactionForm
                             ->minValue(0),
                     ]),
 
-                    Grid::make(2)->schema([
+                    Grid::make(3)->schema([
                         Select::make('category_id')
                             ->label('Kategori')
                             ->relationship(
@@ -54,6 +54,17 @@ class FinanceTransactionForm
                                 'name',
                                 fn ($query) => $query->where('type', 'finance')
                                     ->orWhere('type', 'general')
+                            )
+                            ->searchable()
+                            ->preload()
+                            ->nullable(),
+
+                        Select::make('bank_id')
+                            ->label('Bank / Rekening')
+                            ->relationship(
+                                'bank',
+                                'name',
+                                fn ($query) => $query->where('type', 'bank')
                             )
                             ->searchable()
                             ->preload()

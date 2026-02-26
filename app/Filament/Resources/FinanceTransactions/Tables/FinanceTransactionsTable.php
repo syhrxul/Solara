@@ -56,6 +56,12 @@ class FinanceTransactionsTable
                         default    => $state ?? '-',
                     })
                     ->toggleable(),
+
+                TextColumn::make('bank.name')
+                    ->label('Bank')
+                    ->badge()
+                    ->color('info')
+                    ->toggleable(),
             ])
             ->defaultSort('transaction_date', 'desc')
             ->filters([

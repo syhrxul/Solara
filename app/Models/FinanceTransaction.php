@@ -13,6 +13,7 @@ class FinanceTransaction extends Model
     protected $fillable = [
         'user_id',
         'category_id',
+        'bank_id',
         'title',
         'description',
         'amount',
@@ -37,6 +38,11 @@ class FinanceTransaction extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function bank(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'bank_id');
     }
 
     public function scopeIncome($query)

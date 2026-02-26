@@ -28,6 +28,7 @@ class CategoryForm
                                 'task'    => '📋 Task',
                                 'note'    => '📝 Catatan',
                                 'finance' => '💰 Keuangan',
+                                'bank'    => '🏦 Bank / Rekening',
                                 'goal'    => '🎯 Goal',
                                 'general' => '🌐 Umum',
                             ])
