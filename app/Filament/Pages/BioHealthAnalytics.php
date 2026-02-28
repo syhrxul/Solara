@@ -73,13 +73,13 @@ class BioHealthAnalytics extends Page implements HasTable
                 ->label('📊 Analytics')
                 ->color($this->activeTab === 'analytics' ? 'primary' : 'gray')
                 ->extraAttributes(['class' => '!rounded-full'])
-                ->action(fn () => $this->activeTab = 'analytics'),
+                ->url(request()->fullUrlWithQuery(['tab' => 'analytics'])),
                 
             Action::make('tab_log_tidur')
                 ->label('🌙 Log Tidur')
                 ->color($this->activeTab === 'log_tidur' ? 'primary' : 'gray')
                 ->extraAttributes(['class' => '!rounded-full'])
-                ->action(fn () => $this->activeTab = 'log_tidur'),
+                ->url(request()->fullUrlWithQuery(['tab' => 'log_tidur'])),
         ];
         
         if ($this->activeTab === 'log_tidur') {
