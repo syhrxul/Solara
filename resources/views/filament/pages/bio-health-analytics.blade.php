@@ -1,11 +1,5 @@
 <x-filament-panels::page>
-    @if($weather)
-        <div class="mb-2">
-            <x-filament::badge color="info" size="xl" icon="heroicon-o-map-pin">
-                {{ $weather['location'] ?? '-' }} &nbsp;&bull;&nbsp; {{ $weather['temperature'] ?? '-' }}°C &nbsp;&bull;&nbsp; UV Index: {{ $weather['uv_index'] ?? '-' }}
-            </x-filament::badge>
-        </div>
-    @endif
+
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <x-filament::section>

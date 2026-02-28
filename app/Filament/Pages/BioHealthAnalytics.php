@@ -41,7 +41,7 @@ class BioHealthAnalytics extends Page
             $response = Http::timeout(5)->get('https://api.open-meteo.com/v1/forecast', [
                 'latitude' => $activeLocation['lat'],
                 'longitude' => $activeLocation['lng'],
-                'current' => 'temperature_2m,weather_code',
+                'current' => 'temperature_2m,weather_code,relative_humidity_2m',
                 'hourly' => 'uv_index',
                 'timezone' => 'Asia/Jakarta',
             ]);
@@ -49,6 +49,7 @@ class BioHealthAnalytics extends Page
             if ($response->successful()) {
                 $data = $response->json();
                 $temp = $data['current']['temperature_2m'] ?? 0;
+
                 
                 // Get current hour's UV index
                 $currentHour = Carbon::now('Asia/Jakarta')->format('Y-m-d\TH:00');
@@ -64,6 +65,10 @@ class BioHealthAnalytics extends Page
                     'temperature' => $temp,
                     'uv_index' => $uvIndex,
                     'location' => $activeLocation['name'],
+                    'lat' => $activeLocation['lat'],
+                    'lng' => $activeLocation['lng'],
+                    'humidity' => $data['current']['relative_humidity_2m'] ?? '--',
+                    'weather_code' => $data['current']['weather_code'] ?? -1,
                 ];
 
                 $statusColor = 'success';
@@ -174,5 +179,12 @@ class BioHealthAnalytics extends Page
                 'tips' => ['Tarik data terbaru dari Google Fit di menu Log Waktu Tidur'],
             ];
         }
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Pages\Widgets\BioHealthDailyCuaca::class,
+        ];
     }
 }
