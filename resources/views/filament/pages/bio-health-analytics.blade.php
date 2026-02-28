@@ -4,62 +4,80 @@
             
             {{-- Skin / Weather Detailed Analysis --}}
             @if(isset($skinWarning))
-            <x-filament::section>
-                <x-slot name="heading">
-                    <div class="flex items-center gap-2" style="color: rgba(var(--{{ $skinWarning['color'] ?? 'primary' }}-500), 1);">
-                        <x-filament::icon icon="{{ $skinWarning['icon'] ?? 'heroicon-o-face-smile' }}" class="w-6 h-6" />
-                        <span class="text-gray-900 dark:text-white">Kondisi Lingkungan: {{ $skinWarning['title'] ?? '-' }}</span>
-                    </div>
-                </x-slot>
-
-                <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                    {{ $skinWarning['message'] ?? 'Memuat analisis kulit...' }}
-                </p>
+            <div class="fi-wi-stats-overview-stat relative rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 flex flex-col h-full">
+                <div class="flex items-center gap-x-2 mb-2">
+                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Kondisi Lingkungan
+                    </span>
+                </div>
+                
+                <div class="text-3xl font-semibold tracking-tight text-gray-950 dark:text-white mb-3">
+                    {{ $skinWarning['title'] ?? '-' }}
+                </div>
+                
+                <div class="fi-color-custom flex items-start gap-2 text-sm font-medium text-custom-600 dark:text-custom-400 mb-6" style="--c-400:var(--{{ $skinColor }}-400);--c-600:var(--{{ $skinColor }}-600);">
+                    <x-filament::icon icon="{{ $skinWarning['icon'] ?? 'heroicon-s-face-smile' }}" class="w-5 h-5 shrink-0 mt-0.5" />
+                    <span class="leading-relaxed">
+                        {{ $skinWarning['message'] ?? 'Memuat analisis kulit...' }}
+                    </span>
+                </div>
 
                 @if(isset($skinWarning['tips']) && is_array($skinWarning['tips']) && count($skinWarning['tips']) > 0)
-                    <div class="mt-6 pt-4 border-t border-gray-200 dark:border-white/10">
-                        <h4 class="font-bold text-sm mb-3 text-gray-800 dark:text-gray-200">Tindakan Preventif</h4>
+                    <div class="mt-auto pt-4 border-t border-gray-100 dark:border-white/10">
+                        <div class="flex items-center gap-2 mb-4 text-sm font-semibold text-gray-900 dark:text-white">
+                            <x-filament::icon icon="heroicon-s-light-bulb" class="w-5 h-5 text-warning-500" />
+                            <span>Tindakan Preventif</span>
+                        </div>
                         <ul class="space-y-3">
                             @foreach($skinWarning['tips'] as $tip)
                                 <li class="flex items-start gap-3">
-                                    <x-filament::icon icon="heroicon-m-check-circle" class="w-5 h-5 shrink-0" style="color: rgba(var(--{{ $skinWarning['color'] ?? 'primary' }}-500), 1);" />
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ $tip }}</span>
+                                    <div class="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style="background-color:rgba(var(--{{ $skinColor }}-500),1);"></div>
+                                    <span class="text-sm font-medium text-gray-600 dark:text-gray-300 leading-relaxed">{{ $tip }}</span>
                                 </li>
                             @endforeach
                         </ul>
                     </div>
                 @endif
-            </x-filament::section>
+            </div>
             @endif
 
             {{-- Sleep Detailed Analysis --}}
             @if(isset($sleepCorrelation))
-            <x-filament::section>
-                <x-slot name="heading">
-                    <div class="flex items-center gap-2" style="color: rgba(var(--{{ $sleepCorrelation['color'] ?? 'primary' }}-500), 1);">
-                        <x-filament::icon icon="{{ $sleepCorrelation['icon'] ?? 'heroicon-o-moon' }}" class="w-6 h-6" />
-                        <span class="text-gray-900 dark:text-white">Reservasi Energi: {{ $sleepCorrelation['title'] ?? '-' }}</span>
-                    </div>
-                </x-slot>
-
-                <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                    {{ $sleepCorrelation['message'] ?? 'Memuat analisis tidur...' }}
-                </p>
+            <div class="fi-wi-stats-overview-stat relative rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10 flex flex-col h-full">
+                <div class="flex items-center gap-x-2 mb-2">
+                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Reservasi Energi
+                    </span>
+                </div>
+                
+                <div class="text-3xl font-semibold tracking-tight text-gray-950 dark:text-white mb-3">
+                    {{ $sleepCorrelation['title'] ?? '-' }}
+                </div>
+                
+                <div class="fi-color-custom flex items-start gap-2 text-sm font-medium text-custom-600 dark:text-custom-400 mb-6" style="--c-400:var(--{{ $sleepColor }}-400);--c-600:var(--{{ $sleepColor }}-600);">
+                    <x-filament::icon icon="{{ $sleepCorrelation['icon'] ?? 'heroicon-s-moon' }}" class="w-5 h-5 shrink-0 mt-0.5" />
+                    <span class="leading-relaxed">
+                        {{ $sleepCorrelation['message'] ?? 'Memuat analisis tidur...' }}
+                    </span>
+                </div>
 
                 @if(isset($sleepCorrelation['tips']) && is_array($sleepCorrelation['tips']) && count($sleepCorrelation['tips']) > 0)
-                    <div class="mt-6 pt-4 border-t border-gray-200 dark:border-white/10">
-                        <h4 class="font-bold text-sm mb-3 text-gray-800 dark:text-gray-200">Saran Produktivitas</h4>
+                    <div class="mt-auto pt-4 border-t border-gray-100 dark:border-white/10">
+                        <div class="flex items-center gap-2 mb-4 text-sm font-semibold text-gray-900 dark:text-white">
+                            <x-filament::icon icon="heroicon-s-bolt" class="w-5 h-5 text-warning-500" />
+                            <span>Saran Produktivitas</span>
+                        </div>
                         <ul class="space-y-3">
                             @foreach($sleepCorrelation['tips'] as $tip)
                                 <li class="flex items-start gap-3">
-                                    <x-filament::icon icon="heroicon-m-check-circle" class="w-5 h-5 shrink-0" style="color: rgba(var(--{{ $sleepCorrelation['color'] ?? 'primary' }}-500), 1);" />
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ $tip }}</span>
+                                    <div class="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style="background-color:rgba(var(--{{ $sleepColor }}-500),1);"></div>
+                                    <span class="text-sm font-medium text-gray-600 dark:text-gray-300 leading-relaxed">{{ $tip }}</span>
                                 </li>
                             @endforeach
                         </ul>
                     </div>
                 @endif
-            </x-filament::section>
+            </div>
             @endif
 
         </div>
