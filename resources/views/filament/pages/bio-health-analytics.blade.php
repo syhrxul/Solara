@@ -7,7 +7,7 @@
         </div>
     @endif
 
-    <x-filament::grid default="1" md="2" gap="6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <x-filament::section>
             <x-slot name="heading">
                 Weather & Skin Check
@@ -71,5 +71,5 @@
                 </div>
             @endif
         </x-filament::section>
-    </x-filament::grid>
+    </div>
 </x-filament-panels::page>
