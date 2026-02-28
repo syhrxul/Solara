@@ -18,6 +18,18 @@ class BioHealthAnalytics extends Page
 
     protected string $view = 'filament.pages.bio-health-analytics';
 
+    public function getSubheading(): \Illuminate\Contracts\Support\HtmlString|string|null
+    {
+        return new \Illuminate\Support\HtmlString('
+            <div class="mt-2">
+                <a href="/app/health-dashboard" class="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-indigo-500 hover:bg-indigo-400 rounded-full transition shadow hover:shadow-md cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" /></svg>
+                    Menuju Log Tidur
+                </a>
+            </div>
+        ');
+    }
+
     public ?array $weather = null;
     public ?array $skinWarning = null;
     public ?array $sleepCorrelation = null;
