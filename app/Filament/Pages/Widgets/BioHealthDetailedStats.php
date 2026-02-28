@@ -11,6 +11,13 @@ class BioHealthDetailedStats extends BaseWidget
     public ?array $skinWarning = null;
     public ?array $sleepCorrelation = null;
 
+    protected int | string | array $columnSpan = 'full';
+
+    protected function getColumns(): int
+    {
+        return 1;
+    }
+
     protected function getStats(): array
     {
         if (!$this->skinWarning || !$this->sleepCorrelation) {
