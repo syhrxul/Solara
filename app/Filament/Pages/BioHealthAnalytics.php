@@ -184,7 +184,11 @@ class BioHealthAnalytics extends Page
     protected function getHeaderWidgets(): array
     {
         return [
-            \App\Filament\Pages\Widgets\BioHealthDailyCuaca::class,
+            \App\Filament\Pages\Widgets\BioHealthOverview::make([
+                'weather' => $this->weather,
+                'skinWarning' => $this->skinWarning,
+                'sleepCorrelation' => $this->sleepCorrelation,
+            ]),
         ];
     }
 }
