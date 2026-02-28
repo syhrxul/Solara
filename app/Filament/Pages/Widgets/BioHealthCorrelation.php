@@ -9,7 +9,7 @@ use Carbon\Carbon;
 
 class BioHealthCorrelation extends Widget
 {
-    protected static string $view = 'filament.pages.widgets.bio-health-correlation';
+    protected string $view = 'filament.pages.widgets.bio-health-correlation';
     protected int | string | array $columnSpan = 'full';
     protected static ?int $sort = -1; // Make it appear at the top
 
