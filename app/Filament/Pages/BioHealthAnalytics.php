@@ -66,20 +66,20 @@ class BioHealthAnalytics extends Page
                     'location' => $activeLocation['name'],
                 ];
 
-                $statusColor = 'emerald';
+                $statusColor = 'success';
                 $statusIcon = 'heroicon-o-check-circle';
                 $title = "Aman, Kulit Terjaga";
                 $message = "Cuaca hari ini di {$activeLocation['name']} terbilang bersahabat. Suhu {$temp}°C dengan index UV {$uvIndex}.";
                 $tips = ["Kamu bisa beraktivitas diluar ruangan lebih leluasa", "Gunakan pelembap ringan", "Minum air putih secukupnya"];
 
                 if ($temp > 33 || $uvIndex > 7) {
-                    $statusColor = 'red';
+                    $statusColor = 'danger';
                     $statusIcon = 'heroicon-o-exclamation-triangle';
                     $title = "Peringatan Ekstrem!";
                     $message = "Suhu luar ruangan sangat merusak ({$temp}°C) dengan index radiasi UV bahaya ({$uvIndex}). Mending di dalam ruangan aja!";
                     $tips = ["Wajib gunakan Sunscreen SPF 50+", "Jangan lupa re-apply setiap 2 jam", "Gunakan Hoodie & Masker jika bermotor", "Wajib minum ekstra air putih"];
                 } elseif ($temp > 30 || $uvIndex > 5) {
-                    $statusColor = 'orange';
+                    $statusColor = 'warning';
                     $statusIcon = 'heroicon-o-fire';
                     $title = "Waspada Cuaca Terik";
                     $message = "Hari ini di {$activeLocation['name']} lumayan panas ({$temp}°C, UV: {$uvIndex}). Pastikan hidrasimu aman ya Rul.";
@@ -99,7 +99,7 @@ class BioHealthAnalytics extends Page
         } catch (\Exception $e) {
             $this->weather = null;
             $this->skinWarning = [
-                'color' => 'slate',
+                'color' => 'gray',
                 'icon' => 'heroicon-o-x-circle',
                 'title' => 'Gagal Mengambil Data',
                 'message' => 'Data cuaca gagal ditarik dari server Open-Meteo.',
@@ -126,14 +126,14 @@ class BioHealthAnalytics extends Page
         }
         
         if ($sleepDuration > 0 && $this->weather) {
-            $statusColor = 'blue';
+            $statusColor = 'info';
             $statusIcon = 'heroicon-o-check-badge';
             $title = "Energi Sangat Baik";
             $message = "Durasi tidur semalam: " . round($sleepDuration, 1) . " jam. Waktu yang cukup untuk optimalisasi produktivitas.";
             $tips = ["Manfaatkan energi penuh ini untuk aktivitas berat", "Tetap disiplin pada rutinitas tidurmu"];
 
             if ($sleepDuration < 6) {
-                $statusColor = 'orange';
+                $statusColor = 'warning';
                 $statusIcon = 'heroicon-o-battery-50';
                 $title = "Warning: Kurang Tidur";
                 $message = "Tidur semalam hanya " . round($sleepDuration, 1) . " jam.";
@@ -146,7 +146,7 @@ class BioHealthAnalytics extends Page
                     $tips = ["Minum kopi/teh sebelum mulai bekerja", "Kerjakan tugas paling berat di jam-jam pertama", "Sisihkan waktu istirahat sejenak"];
                 }
             } elseif ($sleepDuration >= 7) {
-                 $statusColor = 'emerald';
+                 $statusColor = 'success';
                  $statusIcon = 'heroicon-o-battery-100';
                  $title = "Performa Optimal!";
                  $message = "Luar biasa! Tidurmu sangat cukup (" . round($sleepDuration, 1) . " jam). Recovery otak & fisik sedang pada puncaknya.";
@@ -167,7 +167,7 @@ class BioHealthAnalytics extends Page
             ];
         } else {
             $this->sleepCorrelation = [
-                'color' => 'slate',
+                'color' => 'gray',
                 'icon' => 'heroicon-o-information-circle',
                 'title' => 'Data Kurang',
                 'message' => 'Tidak dapat menemukan data tidur yang memadai.',
