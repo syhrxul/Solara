@@ -65,6 +65,7 @@ class HealthDashboard extends Page implements HasTable
     protected function getHeaderWidgets(): array
     {
         return [
+            \App\Filament\Pages\Widgets\BioHealthCorrelation::class,
             \App\Filament\Pages\Widgets\SleepOverview::class,
             \App\Filament\Pages\Widgets\SleepChart::class,
         ];
