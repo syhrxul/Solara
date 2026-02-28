@@ -12,11 +12,11 @@ use BackedEnum;
 class BioHealthAnalytics extends Page
 {
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-sparkles';
-    protected static string|UnitEnum|null $navigationGroup = 'Produktivitas';
+    protected static UnitEnum|string|null $navigationGroup = 'Produktivitas';
     protected static ?int $navigationSort = 5;
     protected static ?string $title = 'Bio-Health Analytics';
 
-    protected static string $view = 'filament.pages.bio-health-analytics';
+    protected string $view = 'filament.pages.bio-health-analytics';
 
     public ?array $weather = null;
     public ?string $skinWarning = null;
