@@ -1,10 +1,10 @@
+<x-filament-panels::page>
     @if($activeTab === 'analytics')
         <div class="mt-8 grid grid-cols-1 xl:grid-cols-2 gap-8">
             
             {{-- Skin / Weather Detailed Analysis --}}
             @if(isset($skinWarning))
             <div class="relative overflow-hidden bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[2rem] shadow-sm">
-                <!-- Decorative Background -->
                 <div class="absolute -top-10 -right-10 opacity-5 pointer-events-none">
                     <x-filament::icon icon="heroicon-s-sparkles" class="w-64 h-64 text-{{ $skinWarning['color'] ?? 'primary' }}-500" />
                 </div>
