@@ -1,17 +1,20 @@
 <?php
 
-namespace App\Filament\Pages\Widgets;
+namespace App\Filament\Pages;
 
-use Filament\Widgets\Widget;
+use Filament\Pages\Page;
 use Illuminate\Support\Facades\Http;
 use App\Models\HealthMetric;
 use Carbon\Carbon;
 
-class BioHealthCorrelation extends Widget
+class BioHealthAnalytics extends Page
 {
-    protected string $view = 'filament.pages.widgets.bio-health-correlation';
-    protected int | string | array $columnSpan = 'full';
-    protected static ?int $sort = -1; // Make it appear at the top
+    protected static ?string $navigationIcon = 'heroicon-o-sparkles';
+    protected static ?string $navigationGroup = 'Produktivitas';
+    protected static ?int $navigationSort = 5;
+    protected static ?string $title = 'Bio-Health Analytics';
+
+    protected static string $view = 'filament.pages.bio-health-analytics';
 
     public ?array $weather = null;
     public ?string $skinWarning = null;
@@ -75,10 +78,6 @@ class BioHealthCorrelation extends Widget
         }
 
         // 2. Correlation with Sleep Data
-        // Aggregate last night's sleep metrics (grouping by date)
-        $lastNightDate = Carbon::yesterday()->toDateString();
-        $todayDate = Carbon::today()->toDateString();
-        
         $metrics = HealthMetric::where('user_id', auth()->id())
             ->where('type', 'sleep')
             ->orderBy('date', 'desc')
@@ -105,7 +104,7 @@ class BioHealthCorrelation extends Widget
                 $this->sleepCorrelation = "Durasi tidur semalam: " . round($sleepDuration, 1) . " jam. Tetap jaga produktivitas!";
             }
         } else {
-            $this->sleepCorrelation = "Sinkronkan data tidur dari Google Fit untuk melihat korelasi.";
+            $this->sleepCorrelation = "Sinkronkan data tidur dari Google Fit di menu Log Waktu Tidur untuk melihat korelasi.";
         }
     }
 }
