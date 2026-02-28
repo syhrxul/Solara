@@ -24,7 +24,18 @@ class FinanceStatsWidget extends StatsOverviewWidget
             ->whereBetween('transaction_date', [$startDate, $endDate])
             ->sum('amount');
 
-        $balance = $income - $expense;
+        // Total akumulasi income and expense from all previous times up to this month end
+        $totalIncome = FinanceTransaction::where('user_id', auth()->id())
+            ->where('type', 'income')
+            ->where('transaction_date', '<=', $endDate)
+            ->sum('amount');
+
+        $totalExpense = FinanceTransaction::where('user_id', auth()->id())
+            ->where('type', 'expense')
+            ->where('transaction_date', '<=', $endDate)
+            ->sum('amount');
+
+        $balance = $totalIncome - $totalExpense;
 
         return [
             Stat::make('Pemasukan Bulan Ini', 'Rp ' . number_format($income, 0, ',', '.'))
