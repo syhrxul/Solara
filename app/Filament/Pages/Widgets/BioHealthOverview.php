@@ -30,9 +30,9 @@ class BioHealthOverview extends BaseWidget
         if (in_array($code, [95,96,99])) { $weatherDesc = 'Badai Petir'; }
         if (in_array($code, [2,3,45,48])) { $weatherDesc = 'Berawan'; }
 
-        // Clean up text
-        $skinDesc = \Illuminate\Support\Str::limit($this->skinWarning['message'] ?? '', 45, '...');
-        $sleepDesc = \Illuminate\Support\Str::limit($this->sleepCorrelation['message'] ?? '', 45, '...');
+        // Use full text
+        $skinDesc = $this->skinWarning['message'] ?? '';
+        $sleepDesc = $this->sleepCorrelation['message'] ?? '';
 
         return [
             Stat::make('Cuaca Hari Ini', "{$temp}°C")
