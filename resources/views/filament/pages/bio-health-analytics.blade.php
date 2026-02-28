@@ -20,12 +20,12 @@
                     {{ $skinWarning['title'] ?? '-' }}
                 </div>
                 
-                <!-- Stat Message (Colored) -->
-                <div class="fi-color-custom text-sm font-medium text-custom-600 dark:text-custom-400 mb-6" style="--c-400:var(--{{ $skinColor }}-400);--c-600:var(--{{ $skinColor }}-600);">
+                <!-- Stat Message (Colored - using inline style for exact match) -->
+                <div class="text-sm font-medium mb-6" style="color: rgba(var(--{{ $skinColor }}-500), 1);">
                     {{ $skinWarning['message'] ?? 'Memuat analisis kulit...' }}
                 </div>
 
-                <!-- Tips Section (Same style but default colors) -->
+                <!-- Tips Section -->
                 @if(isset($skinWarning['tips']) && is_array($skinWarning['tips']) && count($skinWarning['tips']) > 0)
                     <div class="mt-auto">
                         <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -34,8 +34,8 @@
                         <ul class="space-y-2">
                             @foreach($skinWarning['tips'] as $tip)
                                 <li class="flex items-start gap-2">
-                                    <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ $tip }}</span>
+                                    <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 shrink-0" style="color: rgba(var(--{{ $skinColor }}-500), 1);" />
+                                    <span class="text-sm text-gray-600 dark:text-gray-400" style="color: rgba(var(--{{ $skinColor }}-500), 1);">{{ $tip }}</span>
                                 </li>
                             @endforeach
                         </ul>
@@ -58,12 +58,12 @@
                     {{ $sleepCorrelation['title'] ?? '-' }}
                 </div>
                 
-                <!-- Stat Message (Colored) -->
-                <div class="fi-color-custom text-sm font-medium text-custom-600 dark:text-custom-400 mb-6" style="--c-400:var(--{{ $sleepColor }}-400);--c-600:var(--{{ $sleepColor }}-600);">
+                <!-- Stat Message (Colored - using inline style for exact match) -->
+                <div class="text-sm font-medium mb-6" style="color: rgba(var(--{{ $sleepColor }}-500), 1);">
                     {{ $sleepCorrelation['message'] ?? 'Memuat analisis tidur...' }}
                 </div>
 
-                <!-- Tips Section (Same style but default colors) -->
+                <!-- Tips Section -->
                 @if(isset($sleepCorrelation['tips']) && is_array($sleepCorrelation['tips']) && count($sleepCorrelation['tips']) > 0)
                     <div class="mt-auto">
                         <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -72,8 +72,8 @@
                         <ul class="space-y-2">
                             @foreach($sleepCorrelation['tips'] as $tip)
                                 <li class="flex items-start gap-2">
-                                    <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ $tip }}</span>
+                                    <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 shrink-0" style="color: rgba(var(--{{ $sleepColor }}-500), 1);" />
+                                    <span class="text-sm text-gray-600 dark:text-gray-400" style="color: rgba(var(--{{ $sleepColor }}-500), 1);">{{ $tip }}</span>
                                 </li>
                             @endforeach
                         </ul>
