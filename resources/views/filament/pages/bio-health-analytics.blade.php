@@ -25,31 +25,82 @@
             @endif
         </div>
 
+        @php
+            $colorMaps = [
+                'emerald' => ['text' => 'text-emerald-400', 'bg' => 'bg-emerald-500/20', 'border' => 'border-emerald-500/30', 'from' => 'from-emerald-500/10', 'hover' => 'hover:shadow-emerald-500/10', 'icon' => 'text-emerald-500', 'header' => 'text-emerald-100'],
+                'red' => ['text' => 'text-red-400', 'bg' => 'bg-red-500/20', 'border' => 'border-red-500/30', 'from' => 'from-red-500/10', 'hover' => 'hover:shadow-red-500/10', 'icon' => 'text-red-500', 'header' => 'text-red-100'],
+                'orange' => ['text' => 'text-orange-400', 'bg' => 'bg-orange-500/20', 'border' => 'border-orange-500/30', 'from' => 'from-orange-500/10', 'hover' => 'hover:shadow-orange-500/10', 'icon' => 'text-orange-500', 'header' => 'text-orange-100'],
+                'blue' => ['text' => 'text-blue-400', 'bg' => 'bg-blue-500/20', 'border' => 'border-blue-500/30', 'from' => 'from-blue-500/10', 'hover' => 'hover:shadow-blue-500/10', 'icon' => 'text-blue-500', 'header' => 'text-blue-100'],
+                'slate' => ['text' => 'text-slate-400', 'bg' => 'bg-slate-500/20', 'border' => 'border-slate-500/30', 'from' => 'from-slate-500/10', 'hover' => 'hover:shadow-slate-500/10', 'icon' => 'text-slate-500', 'header' => 'text-slate-100'],
+            ];
+            
+            $skinColors = $colorMaps[$skinWarning['color'] ?? 'slate'];
+            $sleepColors = $colorMaps[$sleepCorrelation['color'] ?? 'slate'];
+        @endphp
+
         <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Weather & Skin -->
-            <div class="p-6 rounded-2xl bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/30 backdrop-blur shadow-sm hover:shadow-orange-500/10 transition-shadow">
-                <div class="flex items-center gap-3 mb-4 text-orange-400">
-                    <div class="w-10 h-10 shrink-0 rounded-full bg-orange-500/20 flex items-center justify-center">
-                        <x-heroicon-o-fire style="width: 1.5rem; height: 1.5rem;" class="shrink-0" />
+            <div class="p-6 rounded-2xl bg-gradient-to-br {{ $skinColors['from'] }} to-slate-900/50 border {{ $skinColors['border'] }} backdrop-blur shadow-sm {{ $skinColors['hover'] }} transition-all duration-300">
+                <div class="flex items-center gap-4 mb-5 {{ $skinColors['text'] }}">
+                    <div class="w-12 h-12 shrink-0 rounded-xl {{ $skinColors['bg'] }} flex items-center justify-center border {{ $skinColors['border'] }}">
+                        @svg($skinWarning['icon'], 'w-6 h-6 shrink-0')
                     </div>
-                    <h3 class="font-bold text-lg text-orange-100">Weather & Skin Check</h3>
+                    <div>
+                        <p class="text-[11px] uppercase tracking-widest font-bold opacity-80 mb-0.5">Weather & Skin Check</p>
+                        <h3 class="font-bold text-lg leading-tight {{ $skinColors['header'] }}">{{ $skinWarning['title'] }}</h3>
+                    </div>
                 </div>
-                <p class="text-[15px] leading-relaxed text-slate-300 font-medium">
-                    {{ $skinWarning }}
+                <p class="text-[15px] leading-relaxed text-slate-300 mb-5">
+                    {{ $skinWarning['message'] }}
                 </p>
+                @if(isset($skinWarning['tips']) && count($skinWarning['tips']) > 0)
+                    <div class="bg-black/40 rounded-xl p-4 border border-white/5">
+                        <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <x-heroicon-o-light-bulb class="w-4 h-4 text-amber-400" />
+                            Actionable Tips
+                        </h4>
+                        <ul class="space-y-2.5">
+                            @foreach($skinWarning['tips'] as $tip)
+                                <li class="flex items-start gap-3 text-sm text-slate-200">
+                                    <x-heroicon-s-check-circle class="w-5 h-5 {{ $skinColors['icon'] }} shrink-0 mt-0.5" />
+                                    <span class="leading-relaxed">{{ $tip }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
             </div>
 
             <!-- Sleep & Productivity -->
-            <div class="p-6 rounded-2xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-500/30 backdrop-blur shadow-sm hover:shadow-blue-500/10 transition-shadow">
-                <div class="flex items-center gap-3 mb-4 text-blue-400">
-                    <div class="w-10 h-10 shrink-0 rounded-full bg-blue-500/20 flex items-center justify-center">
-                        <x-heroicon-o-moon style="width: 1.5rem; height: 1.5rem;" class="shrink-0" />
+            <div class="p-6 rounded-2xl bg-gradient-to-br {{ $sleepColors['from'] }} to-slate-900/50 border {{ $sleepColors['border'] }} backdrop-blur shadow-sm {{ $sleepColors['hover'] }} transition-all duration-300">
+                <div class="flex items-center gap-4 mb-5 {{ $sleepColors['text'] }}">
+                    <div class="w-12 h-12 shrink-0 rounded-xl {{ $sleepColors['bg'] }} flex items-center justify-center border {{ $sleepColors['border'] }}">
+                        @svg($sleepCorrelation['icon'], 'w-6 h-6 shrink-0')
                     </div>
-                    <h3 class="font-bold text-lg text-blue-100">Sleep & Productivity</h3>
+                    <div>
+                        <p class="text-[11px] uppercase tracking-widest font-bold opacity-80 mb-0.5">Sleep & Productivity</p>
+                        <h3 class="font-bold text-lg leading-tight {{ $sleepColors['header'] }}">{{ $sleepCorrelation['title'] }}</h3>
+                    </div>
                 </div>
-                <p class="text-[15px] leading-relaxed text-slate-300 font-medium">
-                    {{ $sleepCorrelation }}
+                <p class="text-[15px] leading-relaxed text-slate-300 mb-5">
+                    {{ $sleepCorrelation['message'] }}
                 </p>
+                @if(isset($sleepCorrelation['tips']) && count($sleepCorrelation['tips']) > 0)
+                    <div class="bg-black/40 rounded-xl p-4 border border-white/5">
+                        <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                            <x-heroicon-o-light-bulb class="w-4 h-4 text-amber-400" />
+                            Actionable Tips
+                        </h4>
+                        <ul class="space-y-2.5">
+                            @foreach($sleepCorrelation['tips'] as $tip)
+                                <li class="flex items-start gap-3 text-sm text-slate-200">
+                                    <x-heroicon-s-check-circle class="w-5 h-5 {{ $sleepColors['icon'] }} shrink-0 mt-0.5" />
+                                    <span class="leading-relaxed">{{ $tip }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
             </div>
         </div>
     </x-filament::section>
