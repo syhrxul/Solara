@@ -20,8 +20,8 @@
                     {{ $skinWarning['title'] ?? '-' }}
                 </div>
                 
-                <!-- Stat Message (Colored - using inline style for exact match) -->
-                <div class="text-sm font-medium mb-6" style="color: rgba(var(--{{ $skinColor }}-500), 1);">
+                <!-- Stat Message (Colored - using custom inline styles to force tailwind colors) -->
+                <div class="text-sm font-medium mb-4" style="color: rgba(var(--{{ $skinColor }}-500), 1);">
                     {{ $skinWarning['message'] ?? 'Memuat analisis kulit...' }}
                 </div>
 
@@ -35,7 +35,7 @@
                             @foreach($skinWarning['tips'] as $tip)
                                 <li class="flex items-start gap-2">
                                     <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 shrink-0" style="color: rgba(var(--{{ $skinColor }}-500), 1);" />
-                                    <span class="text-sm text-gray-600 dark:text-gray-400" style="color: rgba(var(--{{ $skinColor }}-500), 1);">{{ $tip }}</span>
+                                    <span class="text-sm font-medium" style="color: rgba(var(--{{ $skinColor }}-500), 1);">{{ $tip }}</span>
                                 </li>
                             @endforeach
                         </ul>
@@ -58,8 +58,8 @@
                     {{ $sleepCorrelation['title'] ?? '-' }}
                 </div>
                 
-                <!-- Stat Message (Colored - using inline style for exact match) -->
-                <div class="text-sm font-medium mb-6" style="color: rgba(var(--{{ $sleepColor }}-500), 1);">
+                <!-- Stat Message (Colored - using custom inline styles to force tailwind colors) -->
+                <div class="text-sm font-medium mb-4" style="color: rgba(var(--{{ $sleepColor }}-500), 1);">
                     {{ $sleepCorrelation['message'] ?? 'Memuat analisis tidur...' }}
                 </div>
 
@@ -73,7 +73,7 @@
                             @foreach($sleepCorrelation['tips'] as $tip)
                                 <li class="flex items-start gap-2">
                                     <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 shrink-0" style="color: rgba(var(--{{ $sleepColor }}-500), 1);" />
-                                    <span class="text-sm text-gray-600 dark:text-gray-400" style="color: rgba(var(--{{ $sleepColor }}-500), 1);">{{ $tip }}</span>
+                                    <span class="text-sm font-medium" style="color: rgba(var(--{{ $sleepColor }}-500), 1);">{{ $tip }}</span>
                                 </li>
                             @endforeach
                         </ul>
