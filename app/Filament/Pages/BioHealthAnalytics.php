@@ -162,35 +162,34 @@ class BioHealthAnalytics extends Page implements HasTable
 
                 $statusColor = 'success';
                 $statusIcon = 'heroicon-o-check-circle';
-                $title = "Aman, Kulit Terjaga";
-                $message = "Cuaca hari ini di {$activeLocation['name']} terbilang bersahabat. Suhu {$temp}°C dengan index UV {$uvIndex}. Kulit Anda tidak terlalu terekspos bahaya sinar matahari berlebih yang dapat menyebabkan penuaan dini dan kerusakan sel epidermal.";
+                $title = "Normal & Terjaga";
+                $message = "Kondisi lingkungan hari ini ideal (Suhu {$temp}°C, UV: {$uvIndex}). Sirkulasi tubuh dan kelembapan kulit dalam kondisi aman sepenuhnya.";
                 $tips = [
-                    "Kamu bisa beraktivitas di luar ruangan dengan leluasa.", 
-                    "Gunakan pelembap (moisturizer) ringan agar skin-barrier tidak kering walau cuaca sejuk.", 
-                    "Tetap pertahankan konsumsi air putih minimal 2 liter sehari untuk memastikan hidrasi dari dalam tubuh tetap aman."
+                    "Aman beraktivitas di luar", 
+                    "Jaga hidrasi standar (2L/hari)", 
+                    "Gunakan pelembap wajah ringan"
                 ];
 
                 if ($temp > 33 || $uvIndex > 7) {
                     $statusColor = 'danger';
                     $statusIcon = 'heroicon-o-exclamation-triangle';
-                    $title = "Peringatan Ekstrem Cuaca!";
-                    $message = "Perhatian! Suhu luar ruangan saat ini sangat membakar ({$temp}°C) dengan index radiasi UV tingkat bahaya ({$uvIndex}). Berada di luar tanpa perlindungan bisa membakar kulit (sunburn) dalam waktu kurang dari 15 menit dan merusak kolagen alami.";
+                    $title = "Fase Ekstrem (Waspada)";
+                    $message = "Sakit & dehidrasi mengancam. Index UV ({$uvIndex}) & Suhu ({$temp}°C) melampaui batas wajar. Hindari matahari langsung agar tidak merusak skin-barrier.";
                     $tips = [
-                        "Wajib gunakan Sunscreen spektrum luas (minimal SPF 50+ & PA++++).", 
-                        "Re-apply sunscreen secara disiplin setiap 2-3 jam sekali, apalagi jika berkeringat.", 
-                        "Sangat disarankan memakai pakaian berlengan panjang (Hoodie/Jaket UV) & Masker jika harus berkendara.", 
-                        "Tingkatkan konsumsi air putih, dan segera tambah cairan elektrolit / isotonik jika badan mengeluarkan keringat berlebih."
+                        "Wajib Sunscreen SPF 50+ & Reapply", 
+                        "Stop aktivitas outdoor di jam 11-14", 
+                        "Gunakan kacamata UV & Masker", 
+                        "Standby minuman elektrolit dingin"
                     ];
                 } elseif ($temp > 30 || $uvIndex > 5) {
                     $statusColor = 'warning';
                     $statusIcon = 'heroicon-o-fire';
-                    $title = "Waspada Paparan Terik";
-                    $message = "Hari ini di {$activeLocation['name']} cuacanya lumayan panas ({$temp}°C, UV: {$uvIndex}). Paparan UV tingkat menengah secara terus-menerus bisa memicu hiperpigmentasi (flek hitam) dan membuat kulit jadi sangat kusam (produksi sebum meningkat).";
+                    $title = "Cukup Terik";
+                    $message = "Potensi kusam dan dehidrasi ringan karena paparan panas medium ke tinggi ({$temp}°C, UV: {$uvIndex}).";
                     $tips = [
-                        "Gagas proteksi dengan rutin mengoleskan Sunscreen (minimal SPF 30+) sebelum keluar ruangan.", 
-                        "Rutin basuh muka / gunakan facial wash berbahan lembut jika wajah mulai terasa lengket dan sangat berminyak.",
-                        "Bawa botol minum dari rumah & jaga asupan air secara berkala untuk melembapkan kulit dari dalam.", 
-                        "Gunakan kacamata hitam pelindung UV agar area sekitar mata tidak keriput karena refleks menyipitkan mata saat silau."
+                        "Minimal Sunscreen SPF 30+", 
+                        "Bawa botol minum cadangan",
+                        "Hindari pakaian warna gelap (menyerap panas)"
                     ];
                 }
 
@@ -235,54 +234,53 @@ class BioHealthAnalytics extends Page implements HasTable
         if ($sleepDuration > 0 && $this->weather) {
             $statusColor = 'info';
             $statusIcon = 'heroicon-o-check-badge';
-            $title = "Kapasitas Energi Baik";
-            $message = "Durasi tidur semalam terekam " . round($sleepDuration, 1) . " jam. Durasi ini cukup memadai untuk merangsang pemulihan fungsi kognitif dan pembelahan sel-sel baru di seluruh tubuh. Otak Anda seharusnya siap untuk menyerap dan memproses informasi secara optimal.";
+            $title = "Siap Tempur";
+            $message = "Durasi " . round($sleepDuration, 1) . " jam sudah cukup meregenerasi sel otak. Kapasitas analisa kognitif dan ketahanan fisik Anda hari ini di angka yang solid.";
             $tips = [
-                "Jadwalkan High-Focus Work (pekerjaan paling butuh konsentrasi tinggi) di jam-jam produktif pagi Anda.", 
-                "Pertahankan konsistensi jam tidur ini agar jam biologis sirkadian harian Anda menjadi stabil.",
-                "Seimbangkan energi ini dengan sarapan atau makan siang bernutrisi protein (telur/daging) agar tidak drop saat sore."
+                "Jadwalkan pekerjaan tersulit (Deep Work) di pagi hari", 
+                "Olahraga ringan untuk memompa detak jantung",
+                "Pertahankan konsistensi jam tidur malam ini"
             ];
 
             if ($sleepDuration < 6) {
                 $statusColor = 'warning';
                 $statusIcon = 'heroicon-o-battery-50';
-                $title = "Zona Bahaya: Kurang Tidur";
-                $message = "Bahaya, sistem biologis Anda kurang recharge. Tidur semalam hanya " . round($sleepDuration, 1) . " jam. Kurang dari batas minimal akan sangat keras memengaruhi korteks prefrontal (bagian otak analitik), menurunkan kemampuan membuat keputusan (decision making), merusak memori jangka pendek, serta mengaktifkan hormon stres kortisol yang akan berefek pada mood-swing dan lapar seharian.";
+                $title = "Performa Turun Ekstrem";
+                $message = "Defisit pemulihan akibat tidur hanya " . round($sleepDuration, 1) . " jam. Anda berisiko kehilangan fokus instan, brain-fog (otak buntu), dan mudah merasa kelelahan (fatigue).";
                 
                 if (isset($this->weather['temperature']) && $this->weather['temperature'] > 30) {
-                    $message .= " Diperparah dengan terik dan suhu panas hari ini, detak jantung dan thermoregulasi tubuh memaksa metabolisme bekerja ganda. Risiko mengalami kelelahan mental akut (brain fatigue) dan dehidrasi jauh di atas batas normal.";
+                    $message .= " Suhu panas hari ini mempercepat tingkat dehidrasi dan stress tubuh akibat kelelahan.";
                     $tips = [
-                        "DILARANG KERAS melakukan aktivitas fisik kardio / olahraga berat melampaui limit hari ini, agar tidak collaps!", 
-                        "Wajib jalankan 'Power Nap' (tidur kilat) selama maksimal 20-30 menit di sela-sela jam siang untuk melancarkan sirkulasi oksigen mikro otak.", 
-                        "Setel batasan mutlak: Tidak ada Asupan Kafein / Kopi di atas jam 3 sore. Bayar utang tidur (sleep debt) nanti malam dengan tidur lebih awal secara damai.",
-                        "Gempur asupan hidrasi dengan air isotonik/mineral dingin di siang hari. Otak yang lelah butuh elektrolit untuk hantaran impuls listrik saraf."
+                        "Dilarang olahraga kardio siang ini", 
+                        "Power Nap (Tidur Siang) WAJIB max 20 menit", 
+                        "Stop Kafein setelah jam 2 siang",
+                        "Minum elektrolit ekstra untuk saraf otak"
                     ];
                 } else {
-                    $message .= " Mengingat hal ini, wajar jika Anda merasa lambat (sugar-crash) dan rentan dihantam rasa kantuk luar biasa pada pertengahan sesi kerja Anda.";
+                    $message .= " Antisipasi 'sugar-crash' atau rasa ngantuk akut pada pertengahan hari.";
                     $tips = [
-                        "Piculah saraf Anda dengan secangkir Kopi Hijau / Teh Hitam hangat tepat 30 menit sebelum sesi produktif dimulai.", 
-                        "Paksa diri Anda membabat habis tugas krusial pada urutan teratas (Eat the Frog), jangan ditunda ke sore hari.", 
-                        "Terapkan Pomodoro Modifikasi: Paksa break peregangan badan selama 5 menit untuk setiap 45 menit fokus di depan layar (Micro-breaks).",
-                        "Malam ini jangan banyak scrolling. Matikan lampu demi perbaikan sekresi Melatonin."
+                        "Doping kopi / teh hangat sebelum mulai kerja", 
+                        "Push tugas paling penting sekarang juga", 
+                        "Selang jeda istirahat mata setiap 45 menit"
                     ];
                 }
             } elseif ($sleepDuration >= 7) {
                  $statusColor = 'success';
                  $statusIcon = 'heroicon-o-battery-100';
-                 $title = "Performa Sangat Optimal!";
-                 $message = "Luar biasa hebat! Tidur Anda sangat ideal dan berkuantitas tinggi (" . round($sleepDuration, 1) . " jam penuh). Fase sakral Deep Sleep dan REM dipastikan tuntas membilas racun-racun sisa metabolisme (amyloid beta) di saraf. Daya tahan imun, ledakan otot, serta regenerasi sel saraf Anda saat ini sedang berada di siklus puncak 100%.";
+                 $title = "Puncak Stamina (100%)";
+                 $message = "Kualitas Deep Sleep luar biasa (" . round($sleepDuration, 1) . " jam). Imun tubuh sedang ter-buff, regenerasi sel maksimal, dan otak memproses memori secara sempurna.";
                  if (isset($this->weather['temperature']) && $this->weather['temperature'] <= 30) {
-                     $message .= " Alam juga sedang berpihak; suhu lingkungan nan sejuk akan memperpanjang endurance otak menjaga mood tetap stabil sepanjang hari penuh.";
+                     $message .= " Cuaca mendukung daya tahan konsentrasi lama.";
                      $tips = [
-                         "Sambut hari dengan olahraga pemacu endorfin seperti lari pagi atau kalistenik intens. Badan Andalah mesin bertenaga tinggi saat ini.", 
-                         "Jadikan fase keemasan saraf ini untuk merancang ide gila banting stir, brainstorming solusi arsitektur sulit, atau marathon coding logika.", 
-                         "Kunci keberhasilan adalah repetisi. Pastikan malam ini handphone masuk laci agar durasi jam tidur ini berhasil diamankan untuk esok hari!"
+                         "Cocok untuk olahraga intensif (Gym/Lari)", 
+                         "Lakukan problem-solving arsitektur sulit", 
+                         "Otomatisasi rutinitas harianmu"
                      ];
                  } else {
                      $tips = [
-                         "Inilah the real 'Deep Work'. Tutup semua distraksi sosial dan ledakkan produktivitas Anda pada layar monitor layaknya super-komputer.", 
-                         "Karena sistem kardiovaskular stabil, lawan hawa luar ruangan yang panas dengan tetap berteduh dan minum secara elegan.", 
-                         "Libas habis seluruh To-Do-List di Jira/Tasks Board hari ini tanpa ampun!"
+                         "Fokus pada pekerjaan konseptual berat", 
+                         "Bantah cuaca terik dengan tetap di AC", 
+                         "Amankan to-do list terpenting hari ini"
                      ];
                  }
             }

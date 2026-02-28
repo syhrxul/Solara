@@ -1,80 +1,91 @@
-<x-filament-panels::page>
     @if($activeTab === 'analytics')
-        <div class="mt-4 grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div class="mt-8 grid grid-cols-1 xl:grid-cols-2 gap-8">
             
             {{-- Skin / Weather Detailed Analysis --}}
             @if(isset($skinWarning))
-            <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col h-full">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="p-2.5 bg-{{ $skinWarning['color'] ?? 'primary' }}-100 dark:bg-{{ $skinWarning['color'] ?? 'primary' }}-500/20 rounded-lg">
-                        <x-filament::icon icon="heroicon-o-face-smile" class="w-6 h-6 text-{{ $skinWarning['color'] ?? 'primary' }}-600 dark:text-{{ $skinWarning['color'] ?? 'primary' }}-400" />
-                    </div>
-                    <div>
-                        <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">Analisis Kulit & Cuaca</h3>
-                        <p class="text-sm font-medium text-{{ $skinWarning['color'] ?? 'primary' }}-600 dark:text-{{ $skinWarning['color'] ?? 'primary' }}-400">{{ $skinWarning['title'] ?? '-' }}</p>
-                    </div>
+            <div class="relative overflow-hidden bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[2rem] shadow-sm">
+                <!-- Decorative Background -->
+                <div class="absolute -top-10 -right-10 opacity-5 pointer-events-none">
+                    <x-filament::icon icon="heroicon-s-sparkles" class="w-64 h-64 text-{{ $skinWarning['color'] ?? 'primary' }}-500" />
                 </div>
+                
+                <div class="p-8 relative z-10 flex flex-col h-full">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="p-3.5 bg-{{ $skinWarning['color'] ?? 'primary' }}-50 dark:bg-{{ $skinWarning['color'] ?? 'primary' }}-500/10 rounded-2xl shadow-inner-sm">
+                            <x-filament::icon icon="{{ $skinWarning['icon'] ?? 'heroicon-o-face-smile' }}" class="w-7 h-7 text-{{ $skinWarning['color'] ?? 'primary' }}-600 dark:text-{{ $skinWarning['color'] ?? 'primary' }}-400" />
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">Kondisi Lingkungan</h3>
+                            <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-{{ $skinWarning['color'] ?? 'primary' }}-100 dark:bg-{{ $skinWarning['color'] ?? 'primary' }}-500/20 text-{{ $skinWarning['color'] ?? 'primary' }}-700 dark:text-{{ $skinWarning['color'] ?? 'primary' }}-400 mt-1 uppercase tracking-widest">
+                                {{ $skinWarning['title'] ?? '-' }}
+                            </div>
+                        </div>
+                    </div>
 
-                <div class="prose dark:prose-invert max-w-none text-sm text-gray-600 dark:text-gray-400 leading-relaxed font-medium mb-6">
-                    {{ $skinWarning['message'] ?? 'Memuat analisis kulit...' }}
-                </div>
+                    <p class="text-[15px] text-gray-600 dark:text-gray-400 leading-relaxed font-medium mb-8">
+                        {{ $skinWarning['message'] ?? 'Memuat analisis kulit...' }}
+                    </p>
 
-                @if(isset($skinWarning['tips']) && is_array($skinWarning['tips']) && count($skinWarning['tips']) > 0)
-                    <div class="mt-auto pt-5 border-t border-gray-100 dark:border-gray-800">
-                        <h4 class="font-bold text-sm mb-3 text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                            <x-filament::icon icon="heroicon-s-light-bulb" class="w-4 h-4 text-warning-500" />
-                            Rekomendasi Tindakan
-                        </h4>
-                        <ul class="space-y-3">
-                            @foreach($skinWarning['tips'] as $tip)
-                                <li class="flex items-start gap-3">
-                                    <div class="mt-0.5 rounded-full p-1 bg-{{ $skinWarning['color'] ?? 'primary' }}-100 dark:bg-{{ $skinWarning['color'] ?? 'primary' }}-500/20 text-{{ $skinWarning['color'] ?? 'primary' }}-600 dark:text-{{ $skinWarning['color'] ?? 'primary' }}-400 shrink-0">
-                                        <x-filament::icon icon="heroicon-m-check" class="w-3 h-3 font-bold" />
+                    @if(isset($skinWarning['tips']) && is_array($skinWarning['tips']) && count($skinWarning['tips']) > 0)
+                        <div class="mt-auto">
+                            <h4 class="font-bold text-[11px] uppercase text-gray-400 dark:text-gray-500 tracking-[0.2em] mb-4">Tindakan Preventif</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                @foreach($skinWarning['tips'] as $tip)
+                                    <div class="flex items-center gap-3 p-3.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-800 transition-colors rounded-2xl border border-gray-100 dark:border-gray-800 shrink-0 h-full">
+                                        <div class="flex-none rounded-full p-1 bg-white dark:bg-gray-700 shadow-sm text-{{ $skinWarning['color'] ?? 'primary' }}-500 dark:text-{{ $skinWarning['color'] ?? 'primary' }}-400">
+                                            <x-filament::icon icon="heroicon-m-check" class="w-3.5 h-3.5" />
+                                        </div>
+                                        <span class="text-[13px] font-semibold text-gray-700 dark:text-gray-300">{{ $tip }}</span>
                                     </div>
-                                    <span class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ $tip }}</span>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
             @endif
 
             {{-- Sleep Detailed Analysis --}}
             @if(isset($sleepCorrelation))
-            <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col h-full">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="p-2.5 bg-{{ $sleepCorrelation['color'] ?? 'primary' }}-100 dark:bg-{{ $sleepCorrelation['color'] ?? 'primary' }}-500/20 rounded-lg">
-                        <x-filament::icon icon="heroicon-o-moon" class="w-6 h-6 text-{{ $sleepCorrelation['color'] ?? 'primary' }}-600 dark:text-{{ $sleepCorrelation['color'] ?? 'primary' }}-400" />
-                    </div>
-                    <div>
-                        <h3 class="text-base font-bold text-gray-900 dark:text-gray-100">Analisis Tidur & Kinerja</h3>
-                        <p class="text-sm font-medium text-{{ $sleepCorrelation['color'] ?? 'primary' }}-600 dark:text-{{ $sleepCorrelation['color'] ?? 'primary' }}-400">{{ $sleepCorrelation['title'] ?? '-' }}</p>
-                    </div>
+            <div class="relative overflow-hidden bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[2rem] shadow-sm">
+                <!-- Decorative Background -->
+                <div class="absolute -top-10 -right-10 opacity-5 pointer-events-none">
+                    <x-filament::icon icon="heroicon-s-bolt" class="w-64 h-64 text-{{ $sleepCorrelation['color'] ?? 'primary' }}-500" />
                 </div>
+                
+                <div class="p-8 relative z-10 flex flex-col h-full">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="p-3.5 bg-{{ $sleepCorrelation['color'] ?? 'primary' }}-50 dark:bg-{{ $sleepCorrelation['color'] ?? 'primary' }}-500/10 rounded-2xl shadow-inner-sm">
+                            <x-filament::icon icon="{{ $sleepCorrelation['icon'] ?? 'heroicon-o-moon' }}" class="w-7 h-7 text-{{ $sleepCorrelation['color'] ?? 'primary' }}-600 dark:text-{{ $sleepCorrelation['color'] ?? 'primary' }}-400" />
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">Reservasi Energi</h3>
+                            <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-{{ $sleepCorrelation['color'] ?? 'primary' }}-100 dark:bg-{{ $sleepCorrelation['color'] ?? 'primary' }}-500/20 text-{{ $sleepCorrelation['color'] ?? 'primary' }}-700 dark:text-{{ $sleepCorrelation['color'] ?? 'primary' }}-400 mt-1 uppercase tracking-widest">
+                                {{ $sleepCorrelation['title'] ?? '-' }}
+                            </div>
+                        </div>
+                    </div>
 
-                <div class="prose dark:prose-invert max-w-none text-sm text-gray-600 dark:text-gray-400 leading-relaxed font-medium mb-6">
-                    {{ $sleepCorrelation['message'] ?? 'Memuat analisis tidur...' }}
-                </div>
+                    <p class="text-[15px] text-gray-600 dark:text-gray-400 leading-relaxed font-medium mb-8">
+                        {{ $sleepCorrelation['message'] ?? 'Memuat analisis tidur...' }}
+                    </p>
 
-                @if(isset($sleepCorrelation['tips']) && is_array($sleepCorrelation['tips']) && count($sleepCorrelation['tips']) > 0)
-                    <div class="mt-auto pt-5 border-t border-gray-100 dark:border-gray-800">
-                        <h4 class="font-bold text-sm mb-3 text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                            <x-filament::icon icon="heroicon-s-bolt" class="w-4 h-4 text-warning-500" />
-                            Strategi Hari Ini
-                        </h4>
-                        <ul class="space-y-3">
-                            @foreach($sleepCorrelation['tips'] as $tip)
-                                <li class="flex items-start gap-3">
-                                    <div class="mt-0.5 rounded-full p-1 bg-{{ $sleepCorrelation['color'] ?? 'primary' }}-100 dark:bg-{{ $sleepCorrelation['color'] ?? 'primary' }}-500/20 text-{{ $sleepCorrelation['color'] ?? 'primary' }}-600 dark:text-{{ $sleepCorrelation['color'] ?? 'primary' }}-400 shrink-0">
-                                        <x-filament::icon icon="heroicon-m-chevron-double-right" class="w-3 h-3 font-bold" />
+                    @if(isset($sleepCorrelation['tips']) && is_array($sleepCorrelation['tips']) && count($sleepCorrelation['tips']) > 0)
+                        <div class="mt-auto">
+                            <h4 class="font-bold text-[11px] uppercase text-gray-400 dark:text-gray-500 tracking-[0.2em] mb-4">Saran Produktivitas</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                @foreach($sleepCorrelation['tips'] as $tip)
+                                    <div class="flex items-center gap-3 p-3.5 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800/50 dark:hover:bg-gray-800 transition-colors rounded-2xl border border-gray-100 dark:border-gray-800 shrink-0 h-full">
+                                        <div class="flex-none rounded-full p-1 bg-white dark:bg-gray-700 shadow-sm text-{{ $sleepCorrelation['color'] ?? 'primary' }}-500 dark:text-{{ $sleepCorrelation['color'] ?? 'primary' }}-400">
+                                            <x-filament::icon icon="heroicon-m-chevron-right" class="w-3.5 h-3.5" />
+                                        </div>
+                                        <span class="text-[13px] font-semibold text-gray-700 dark:text-gray-300">{{ $tip }}</span>
                                     </div>
-                                    <span class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ $tip }}</span>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
             @endif
 
