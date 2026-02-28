@@ -7,7 +7,7 @@
         <div class="relative z-10 flex items-center justify-between gap-4 mb-6">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 shrink-0 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-                    <x-heroicon-o-sparkles class="!w-5 !h-5" />
+                    <x-heroicon-o-sparkles style="width: 1.25rem; height: 1.25rem;" />
                 </div>
                 <div>
                     <h2 class="text-xl font-bold tracking-tight">Bio-Health Analytics</h2>
@@ -16,9 +16,9 @@
             </div>
             @if($weather)
                 <div class="hidden sm:flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/10 text-sm shadow-inner backdrop-blur-md">
-                    <div class="flex items-center gap-1.5 text-slate-300"><x-heroicon-o-map-pin class="!w-4 !h-4 text-emerald-400"/> {!! $weather['location'] ?? '-' !!}</div>
+                    <div class="flex items-center gap-1.5 text-slate-300"><x-heroicon-o-map-pin style="width: 1rem; height: 1rem;" class="text-emerald-400"/> {!! $weather['location'] ?? '-' !!}</div>
                     <div class="w-px h-4 bg-white/20"></div>
-                    <div class="flex items-center gap-1.5"><span class="text-orange-400"><x-heroicon-o-sun class="!w-4 !h-4"/></span> {!! $weather['temperature'] ?? '-' !!}°C</div>
+                    <div class="flex items-center gap-1.5"><span class="text-orange-400"><x-heroicon-o-sun style="width: 1rem; height: 1rem;"/></span> {!! $weather['temperature'] ?? '-' !!}°C</div>
                     <div class="w-px h-4 bg-white/20"></div>
                     <div class="flex items-center gap-1.5"><span class="text-purple-400">UV:</span> {!! $weather['uv_index'] ?? '-' !!}</div>
                 </div>
@@ -29,7 +29,7 @@
             <!-- Weather & Skin -->
             <div class="p-5 rounded-2xl bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/30 backdrop-blur shadow-sm hover:shadow-orange-500/10 transition-shadow">
                 <div class="flex items-center gap-3 mb-3 text-orange-400">
-                    <x-heroicon-o-fire class="!w-5 !h-5 shrink-0" />
+                    <x-heroicon-o-fire style="width: 1.25rem; height: 1.25rem;" class="shrink-0" />
                     <h3 class="font-semibold text-lg text-orange-100">Weather & Skin Check</h3>
                 </div>
                 <p class="text-[15px] leading-relaxed text-slate-300 font-medium">
@@ -40,7 +40,7 @@
             <!-- Sleep & Productivity -->
             <div class="p-5 rounded-2xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-500/30 backdrop-blur shadow-sm hover:shadow-blue-500/10 transition-shadow">
                 <div class="flex items-center gap-3 mb-3 text-blue-400">
-                    <x-heroicon-o-moon class="!w-5 !h-5 shrink-0" />
+                    <x-heroicon-o-moon style="width: 1.25rem; height: 1.25rem;" class="shrink-0" />
                     <h3 class="font-semibold text-lg text-blue-100">Sleep & Productivity</h3>
                 </div>
                 <p class="text-[15px] leading-relaxed text-slate-300 font-medium">
