@@ -6,11 +6,13 @@ use Filament\Pages\Page;
 use Illuminate\Support\Facades\Http;
 use App\Models\HealthMetric;
 use Carbon\Carbon;
+use UnitEnum;
+use BackedEnum;
 
 class BioHealthAnalytics extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-sparkles';
-    protected static ?string $navigationGroup = 'Produktivitas';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-sparkles';
+    protected static string|UnitEnum|null $navigationGroup = 'Produktivitas';
     protected static ?int $navigationSort = 5;
     protected static ?string $title = 'Bio-Health Analytics';
 
