@@ -8,9 +8,19 @@ use App\Models\HealthMetric;
 use Carbon\Carbon;
 use UnitEnum;
 use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
+use Google\Client;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\HtmlString;
 
-class BioHealthAnalytics extends Page
+class BioHealthAnalytics extends Page implements HasTable
 {
+    use InteractsWithTable;
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-sparkles';
     protected static UnitEnum|string|null $navigationGroup = 'Produktivitas';
     protected static ?int $navigationSort = 5;
@@ -18,25 +28,93 @@ class BioHealthAnalytics extends Page
 
     protected string $view = 'filament.pages.bio-health-analytics';
 
-    public function getSubheading(): \Illuminate\Contracts\Support\HtmlString|string|null
-    {
-        return new \Illuminate\Support\HtmlString('
-            <div class="mt-2">
-                <a href="/app/health-dashboard" class="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-indigo-500 hover:bg-indigo-400 rounded-full transition shadow hover:shadow-md cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" /></svg>
-                    Menuju Log Tidur
-                </a>
-            </div>
-        ');
-    }
-
     public ?array $weather = null;
     public ?array $skinWarning = null;
     public ?array $sleepCorrelation = null;
+    
+    public string $activeTab = 'analytics';
 
     public function mount()
     {
+        $this->activeTab = request()->query('tab', 'analytics');
         $this->loadData();
+        $this->syncHealthData(30);
+    }
+
+    public function getSubheading(): Htmlable|string|null
+    {
+        if ($this->activeTab === 'analytics') {
+            return null;
+        }
+
+        $user = auth()->user();
+        $tokenExp = $user->google_token_expires_at;
+
+        if (!$user->google_access_token) {
+            return new HtmlString("<span class='text-red-500'>❌ Google Fit belum tertaut. Silakan klik 'Perbarui Izin Akses'.</span>");
+        }
+
+        if (!$tokenExp) {
+            return new HtmlString("<span class='text-green-500'>✅ Terhubung ke Google Fit, namun masa aktif token tidak diketahui.</span>");
+        }
+
+        $expiresAt = Carbon::parse($tokenExp);
+        if ($expiresAt->isPast()) {
+            return new HtmlString("<span class='text-warning-500'>⚠️ Token akses sesi terakhirmy habis " . $expiresAt->diffForHumans() . ". Sistem otomatis pakai Refresh Token.</span>");
+        }
+
+        return new HtmlString("<span class='text-green-500'>✅ Google Fit aktif. Token akses sesi habis " . $expiresAt->diffForHumans() . ".</span>");
+    }
+
+    protected function getHeaderActions(): array
+    {
+        $actions = [
+            Action::make('tab_analytics')
+                ->label('📊 Analytics')
+                ->color($this->activeTab === 'analytics' ? 'primary' : 'gray')
+                ->extraAttributes(['class' => '!rounded-full'])
+                ->action(fn () => $this->activeTab = 'analytics'),
+                
+            Action::make('tab_log_tidur')
+                ->label('🌙 Log Tidur')
+                ->color($this->activeTab === 'log_tidur' ? 'primary' : 'gray')
+                ->extraAttributes(['class' => '!rounded-full'])
+                ->action(fn () => $this->activeTab = 'log_tidur'),
+        ];
+        
+        if ($this->activeTab === 'log_tidur') {
+            $actions[] = Action::make('sync')
+                ->label('Tarik Data Terbaru')
+                ->icon('heroicon-o-arrow-path')
+                ->color('success')
+                ->action('syncHealthData');
+                
+            $actions[] = Action::make('reconnect')
+                ->label('Perbarui Izin Akses')
+                ->icon('heroicon-o-key')
+                ->url(url('/auth/google/redirect'))
+                ->color('warning');
+        }
+
+        return $actions;
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        if ($this->activeTab === 'analytics') {
+            return [
+                \App\Filament\Pages\Widgets\BioHealthOverview::make([
+                    'weather' => $this->weather,
+                    'skinWarning' => $this->skinWarning,
+                    'sleepCorrelation' => $this->sleepCorrelation,
+                ]),
+            ];
+        }
+
+        return [
+            \App\Filament\Pages\Widgets\SleepOverview::class,
+            \App\Filament\Pages\Widgets\SleepChart::class,
+        ];
     }
 
     protected function loadData()
@@ -61,7 +139,6 @@ class BioHealthAnalytics extends Page
             if ($response->successful()) {
                 $data = $response->json();
                 $temp = $data['current']['temperature_2m'] ?? 0;
-
                 
                 // Get current hour's UV index
                 $currentHour = Carbon::now('Asia/Jakarta')->format('Y-m-d\TH:00');
@@ -124,7 +201,7 @@ class BioHealthAnalytics extends Page
             ];
         }
 
-        // 2. Correlation with Sleep Data
+        // Correlation with Sleep Data
         $metrics = HealthMetric::where('user_id', auth()->id())
             ->where('type', 'sleep')
             ->orderBy('date', 'desc')
@@ -134,7 +211,6 @@ class BioHealthAnalytics extends Page
         $sleepDuration = 0;
         
         if ($metrics->isNotEmpty()) {
-            // Use the most recent day's total duration
             $recentDate = $metrics->first()->date->toDateString();
             $recentSleep = $metrics->filter(function($m) use ($recentDate) {
                 return $m->date->toDateString() === $recentDate;
@@ -193,14 +269,192 @@ class BioHealthAnalytics extends Page
         }
     }
 
-    protected function getHeaderWidgets(): array
+    private function getClient()
     {
-        return [
-            \App\Filament\Pages\Widgets\BioHealthOverview::make([
-                'weather' => $this->weather,
-                'skinWarning' => $this->skinWarning,
-                'sleepCorrelation' => $this->sleepCorrelation,
-            ]),
-        ];
+        $user = auth()->user();
+        if (!$user->google_access_token) return null;
+
+        $client = new Client();
+        $client->setClientId(env('GOOGLE_CLIENT_ID'));
+        $client->setClientSecret(env('GOOGLE_CLIENT_SECRET'));
+        
+        $client->setAccessToken([
+            'access_token' => $user->google_access_token,
+            'refresh_token' => $user->google_refresh_token,
+            'expires_in' => $user->google_token_expires_at ? Carbon::parse($user->google_token_expires_at)->diffInSeconds(Carbon::now(), false) * -1 : 0,
+        ]);
+
+        if ($client->isAccessTokenExpired()) {
+            if ($client->getRefreshToken()) {
+                $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+                $token = $client->getAccessToken();
+                if(!isset($token['error'])){
+                    $user->update([
+                        'google_access_token' => $token['access_token'],
+                        'google_refresh_token' => $token['refresh_token'] ?? $user->google_refresh_token,
+                        'google_token_expires_at' => Carbon::now()->addSeconds($token['expires_in'] ?? 3599),
+                    ]);
+                } else {
+                    return null;
+                }
+            } else {
+                return null;
+            }
+        }
+
+        return $client;
+    }
+
+    public function syncHealthData($daysBack = 30)
+    {
+        $client = $this->getClient();
+        if (!$client) return;
+
+        $token = $client->getAccessToken()['access_token'];
+        $user = auth()->user();
+
+        try {
+            HealthMetric::where('user_id', $user->id)->where('type', 'sleep')->delete();
+
+            $sessionsResponse = Http::withToken($token)
+                ->get('https://www.googleapis.com/fitness/v1/users/me/sessions', [
+                    'activityType' => 72,
+                    'startTime' => Carbon::today()->subDays($daysBack)->toRfc3339String(),
+                    'endTime' => Carbon::now()->toRfc3339String()
+                ]);
+
+            if ($sessionsResponse->successful()) {
+                $sessions = $sessionsResponse->json('session');
+                if (!empty($sessions)) {
+                    $sleepIntervals = [];
+
+                    foreach ($sessions as $session) {
+                        $startMs = (int) $session['startTimeMillis'];
+                        $endMs = (int) $session['endTimeMillis'];
+                        
+                        $durationH = ($endMs - $startMs) / 1000 / 3600;
+                        if ($durationH > 18 || $durationH < 0.16) {
+                            continue;
+                        }
+
+                        $sleepIntervals[] = [
+                            'start' => $startMs,
+                            'end' => $endMs
+                        ];
+                    }
+
+                    usort($sleepIntervals, fn($a, $b) => $a['start'] <=> $b['start']);
+
+                    $mergedIntervals = [];
+                    foreach ($sleepIntervals as $interval) {
+                        if (empty($mergedIntervals)) {
+                            $mergedIntervals[] = $interval;
+                        } else {
+                            $last = &$mergedIntervals[count($mergedIntervals) - 1];
+                            if ($interval['start'] <= ($last['end'] + 1800000)) {
+                                $last['end'] = max($last['end'], $interval['end']);
+                            } else {
+                                $mergedIntervals[] = $interval;
+                            }
+                        }
+                    }
+
+                    foreach ($mergedIntervals as $merged) {
+                        $startC = Carbon::createFromTimestampMs($merged['start'])->timezone('Asia/Jakarta');
+                        $endC = Carbon::createFromTimestampMs($merged['end'])->timezone('Asia/Jakarta');
+                        
+                        $dateLabel = $startC->toDateString();
+                        $durationHours = ($merged['end'] - $merged['start']) / 1000 / 3600;
+                        
+                        $sleepDetails = [
+                            'rem' => 0, 'light' => $durationHours, 'deep' => 0, 'awake' => 0,
+                            'time_bed' => $startC->format('H:i'),
+                            'time_wakeup' => $endC->format('H:i'),
+                            'score' => $durationHours >= 7 ? 'Sangat Baik' : ($durationHours >= 5 ? 'Cukup' : 'Kurang'),
+                            'start_timestamp' => $merged['start'],
+                            'end_timestamp' => $merged['end']
+                        ];
+
+                        HealthMetric::create([
+                            'user_id' => $user->id, 
+                            'date' => $dateLabel, 
+                            'type' => 'sleep',
+                            'value' => $durationHours, 
+                            'details' => $sleepDetails
+                        ]);
+                    }
+                }
+            }
+
+            // SPO2
+            $startTimeMillis = Carbon::today()->subDays($daysBack)->getTimestampMs();
+            $endTimeMillis = Carbon::now()->getTimestampMs();
+
+            $spo2Response = Http::withToken($token)
+                ->post('https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate', [
+                    'aggregateBy' => [['dataTypeName' => 'com.google.oxygen_saturation']],
+                    'bucketByTime' => ['durationMillis' => 86400000],
+                    'startTimeMillis' => $startTimeMillis,
+                    'endTimeMillis' => $endTimeMillis
+                ]);
+
+            if ($spo2Response->successful()) {
+                $buckets = $spo2Response->json('bucket');
+                if (!empty($buckets)) {
+                    foreach ($buckets as $bucket) {
+                        if (isset($bucket['dataset'][0]['point']) && count($bucket['dataset'][0]['point']) > 0) {
+                            $spo2Val = round($bucket['dataset'][0]['point'][0]['value'][0]['fpVal'], 1);
+                            $bucketDate = Carbon::createFromTimestampMs($bucket['startTimeMillis'])->toDateString();
+                            HealthMetric::updateOrCreate(
+                                ['user_id' => $user->id, 'date' => $bucketDate, 'type' => 'spo2'],
+                                ['value' => $spo2Val, 'details' => []]
+                            );
+                        }
+                    }
+                }
+            }
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Google Fit Sync Error: ' . $e->getMessage());
+        }
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->query(HealthMetric::query()->where('user_id', auth()->id())->where('type', 'sleep')->orderBy('date', 'desc'))
+            ->columns([
+                TextColumn::make('date')
+                    ->label('Tanggal')
+                    ->date('d M Y')
+                    ->sortable()
+                    ->searchable(),
+                
+                TextColumn::make('value')
+                    ->label('Total Waktu Tidur')
+                    ->formatStateUsing(fn ($state) => floor($state) . 'j ' . round(($state - floor($state)) * 60) . 'm')
+                    ->badge()
+                    ->color('primary'),
+
+                TextColumn::make('details.score')
+                    ->label('Kualitas')
+                    ->badge()
+                    ->color(fn ($state) => match($state) {
+                        'Sangat Baik' => 'success',
+                        'Cukup' => 'warning',
+                        'Kurang' => 'danger',
+                        default => 'gray',
+                    }),
+                    
+                TextColumn::make('details.time_bed')
+                    ->label('Mulai Tidur')
+                    ->icon('heroicon-o-moon'),
+                    
+                TextColumn::make('details.time_wakeup')
+                    ->label('Bangun')
+                    ->icon('heroicon-o-sun'),
+            ])
+            ->emptyStateHeading('Belum ada Histori Tidur')
+            ->emptyStateDescription('Tarik data dari Google Fit terlebih dahulu. Pastikan Smartwatch Anda sudah Sinkron dengan Google Fit di Telepon.');
     }
 }
