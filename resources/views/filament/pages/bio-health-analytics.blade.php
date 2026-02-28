@@ -1,5 +1,9 @@
 <x-filament-panels::page>
     @if($activeTab === 'analytics')
+        @php
+            $skinColor = $skinWarning['color'] ?? 'primary';
+            $sleepColor = $sleepCorrelation['color'] ?? 'primary';
+        @endphp
         <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             
             {{-- Skin / Weather Detailed Analysis --}}
