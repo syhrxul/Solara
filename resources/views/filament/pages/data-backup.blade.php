@@ -32,12 +32,12 @@
                 <div>
                     <h3 class="text-lg font-bold text-blue-800 dark:text-blue-200">Backup Data Akun Anda</h3>
                     <p class="mt-1 text-sm text-blue-700 dark:text-blue-300">
-                        Klik tombol <strong>"Download Backup Sekarang"</strong> di pojok kanan atas untuk mengunduh seluruh data Anda ke format <strong>JSON</strong>. 
-                        File backup mencakup: Tasks, Habits, Habit Logs, Catatan, Jadwal Kuliah, Tugas Kuliah, Transaksi Keuangan, dan Goals.
+                        Klik tombol <strong>"Download Backup Sekarang"</strong> di pojok kanan atas untuk mengunduh seluruh data Anda dalam format <strong>.slr</strong> yang telah <strong>dienkripsi (AES-256)</strong>. 
+                        File hanya bisa dibaca oleh sistem Solara dengan akun Anda sendiri &mdash; aman dari orang lain.
                     </p>
                     <p class="mt-3 text-xs text-blue-600 dark:text-blue-400">
                         📦 Total <strong>{{ number_format($total) }} record</strong> akan dibackup •
-                        🛡️ Backup bersifat privat & hanya mencakup data Anda sendiri •
+                        🔐 Terenkripsi AES-256-CBC, tidak bisa dibaca manual •
                         📅 Waktu backup: {{ now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm') }} WIB
                     </p>
                 </div>
@@ -49,21 +49,22 @@
             <div class="rounded-xl border border-green-200 bg-green-50 p-5 dark:border-green-800 dark:bg-green-950">
                 <h4 class="font-semibold text-green-800 dark:text-green-200">✅ Apa yang terbackup?</h4>
                 <ul class="mt-2 space-y-1 text-sm text-green-700 dark:text-green-300 list-disc list-inside">
-                    <li>Semua task & to-do list personal</li>
+                    <li>Semua task &amp; to-do list personal</li>
                     <li>Seluruh habit beserta log penyelesaian</li>
                     <li>Catatan-catatan (Notes)</li>
-                    <li>Jadwal kuliah & tugas kampus</li>
-                    <li>Transaksi keuangan (pemasukan & pengeluaran)</li>
-                    <li>Goal & milestone pencapaian</li>
+                    <li>Jadwal kuliah &amp; tugas kampus</li>
+                    <li>Transaksi keuangan (pemasukan &amp; pengeluaran)</li>
+                    <li>Goal &amp; milestone pencapaian</li>
                 </ul>
             </div>
             <div class="rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-800 dark:bg-amber-950">
-                <h4 class="font-semibold text-amber-800 dark:text-amber-200">💡 Cara Menggunakan File Backup</h4>
+                <h4 class="font-semibold text-amber-800 dark:text-amber-200">💡 Tentang Format .slr</h4>
                 <ul class="mt-2 space-y-1 text-sm text-amber-700 dark:text-amber-300 list-disc list-inside">
-                    <li>Simpan file JSON di tempat yang aman (Google Drive, dll)</li>
-                    <li>File dapat dibuka dengan teks editor atau browser</li>
-                    <li>Format JSON kompatibel untuk migrasi data</li>
-                    <li>Disarankan backup minimal 1x seminggu</li>
+                    <li>File <code>.slr</code> adalah format backup eksklusif Solara</li>
+                    <li>Isi data dienkripsi dengan <strong>AES-256-CBC</strong></li>
+                    <li>Tidak bisa dibuka dengan teks editor biasa</li>
+                    <li>Kunci enkripsi unik per‑akun &mdash; hanya bisa direstore di akun Anda</li>
+                    <li>Disarankan backup minimal 1&times; seminggu</li>
                 </ul>
             </div>
         </div>
