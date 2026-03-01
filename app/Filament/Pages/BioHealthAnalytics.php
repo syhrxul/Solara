@@ -397,7 +397,7 @@ class BioHealthAnalytics extends Page implements HasTable
                         $startC = Carbon::createFromTimestampMs($merged['start'])->timezone('Asia/Jakarta');
                         $endC = Carbon::createFromTimestampMs($merged['end'])->timezone('Asia/Jakarta');
                         
-                        $dateLabel = $startC->toDateString();
+                        $dateLabel = $endC->toDateString();
                         $durationHours = ($merged['end'] - $merged['start']) / 1000 / 3600;
                         
                         $sleepDetails = [

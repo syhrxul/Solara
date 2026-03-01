@@ -25,7 +25,7 @@ class SettingsPage extends Page
     {
         $user = auth()->user();
         
-        // Default settings (semua aktif jika belum diset)
+        // Default settings
         $defaultSettings = [
             'module_tasks' => true,
             'module_habits' => true,
@@ -93,8 +93,7 @@ class SettingsPage extends Page
             ->title('Pengaturan Berhasil Disimpan!')
             ->success()
             ->send();
-            
-        // Trigger redirect to refresh sidebar menu
+
         redirect(request()->header('Referer'));
     }
 }

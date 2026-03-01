@@ -137,12 +137,10 @@ class TelegramSettingsPage extends Page
         $user = auth()->user();
         $formData = $this->form->getState();
 
-        // Save chat ID to user column
         $user->update([
             'telegram_chat_id' => $formData['telegram_chat_id'] ?: null,
         ]);
 
-        // Save notification preferences to settings
         $settings = $user->settings ?? [];
         $settings['telegram_notify_schedule'] = $formData['telegram_notify_schedule'] ?? true;
         $settings['telegram_notify_tasks'] = $formData['telegram_notify_tasks'] ?? true;

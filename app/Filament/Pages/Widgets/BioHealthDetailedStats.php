@@ -24,7 +24,6 @@ class BioHealthDetailedStats extends BaseWidget
             return [];
         }
 
-        // Build tips HTML for Skin
         $skinTipsHtml = '';
         if (isset($this->skinWarning['tips']) && count($this->skinWarning['tips']) > 0) {
             $skinTipsHtml = '<div class="mt-4"><strong class="text-xs uppercase tracking-widest opacity-70">Tindakan Preventif</strong><ul class="mt-2 space-y-1">';
