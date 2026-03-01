@@ -56,14 +56,16 @@ class TelegramWebhookController extends Controller
             return response()->json(['status' => 'ok']);
         }
 
-        $inlineKeyboard = [
-            'inline_keyboard' => [
+        $keyboard = [
+            'keyboard' => [
                 [
-                    ['text' => '📋 Tugas', 'callback_data' => '/tasks'],
-                    ['text' => '🗓️ Jadwal', 'callback_data' => '/jadwal'],
-                    ['text' => '🔄 Habits', 'callback_data' => '/habits']
+                    ['text' => '📋 Tugas'],
+                    ['text' => '🗓️ Jadwal'],
+                    ['text' => '🔄 Habits']
                 ]
-            ]
+            ],
+            'resize_keyboard' => true,
+            'is_persistent' => true,
         ];
 
         $lowText = strtolower(trim($text));
@@ -73,19 +75,20 @@ class TelegramWebhookController extends Controller
                 $chatId, 
                 "Halo {$user->name} 👋\n\nSelamat datang di Bot Solara!\nSilakan gunakan menu di bawah untuk memeriksa jadwal, tugas, dan habits Anda secara cepat.", 
                 'HTML', 
-                $inlineKeyboard
+                $keyboard
             );
         } elseif (in_array($lowText, ['📋 tugas', '/task', '/tasks', '/tugas', 'tugas', 'tugas kuliah', 'tasks'])) {
-            $this->sendTasksAndAssignments($chatId, $user, $inlineKeyboard);
+            $this->sendTasksAndAssignments($chatId, $user, $keyboard);
         } elseif (in_array($lowText, ['🗓️ jadwal', '/jadwal', 'jadwal', 'jadwal kuliah', '/schedule'])) {
-            $this->sendTodaySchedule($chatId, $user, $inlineKeyboard);
+            $this->sendTodaySchedule($chatId, $user, $keyboard);
         } elseif (in_array($lowText, ['🔄 habits', '/habits', '/habit', 'habbit', 'habit', 'habits'])) {
-            $this->sendTodayHabits($chatId, $user, $inlineKeyboard);
+            $this->sendTodayHabits($chatId, $user, $keyboard);
         } else {
             $this->telegram->sendMessage(
                 $chatId, 
-                "Perintah tidak dikenali. Silakan ketik /menu untuk memanggil menu interaktif 👇", 
-                'HTML'
+                "Perintah tidak dikenali. Silakan gunakan tombol menu di bawah 👇", 
+                'HTML',
+                $keyboard
             );
         }
 
