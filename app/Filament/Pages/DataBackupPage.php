@@ -120,16 +120,22 @@ class DataBackupPage extends Page
             return;
         }
 
-        // Decrypt
-        $encKey = hash('sha256', config('app.key') . '::' . $user->id, true);
+        // Decrypt — try app-key-only first (new format), fallback to old key with user_id
+        $encKeyNew = hash('sha256', config('app.key'), true);
+        $encKeyOld = hash('sha256', config('app.key') . '::' . $user->id, true);
         $iv         = substr($raw, 4, 16);
         $ciphertext = substr($raw, 20);
-        $json = openssl_decrypt($ciphertext, 'AES-256-CBC', $encKey, OPENSSL_RAW_DATA, $iv);
+
+        $json = openssl_decrypt($ciphertext, 'AES-256-CBC', $encKeyNew, OPENSSL_RAW_DATA, $iv);
+        if ($json === false) {
+            // Fallback: try old key (backup made before this fix)
+            $json = openssl_decrypt($ciphertext, 'AES-256-CBC', $encKeyOld, OPENSSL_RAW_DATA, $iv);
+        }
 
         if ($json === false) {
             Notification::make()
                 ->title('Dekripsi Gagal')
-                ->body('File tidak bisa didekripsi. Pastikan file ini berasal dari akun Anda sendiri.')
+                ->body('File tidak bisa didekripsi. Pastikan file ini adalah file .slr yang dihasilkan oleh Solara.')
                 ->danger()
                 ->send();
 
@@ -187,22 +193,18 @@ class DataBackupPage extends Page
                 }
             };
 
-            // Tasks: match by title + status + due_date
             $restore(Task::class, $d['tasks'] ?? [], ['title']);
-
-            // Habits: match by name
+                                
             $restore(Habit::class, $d['habits'] ?? [], ['name'], ['logs']);
 
-            // HabitLogs: match by habit unique key via logged_date
             foreach ($d['habit_logs'] ?? [] as $log) {
                 $log['user_id'] = $user->id;
-                // Try to find the habit by name from the backup habits list
+
                 $habitName = collect($d['habits'] ?? [])->firstWhere('id', $log['habit_id'])['name'] ?? null;
                 $habit = $habitName ? Habit::where('user_id', $user->id)->where('name', $habitName)->first() : null;
 
                 if (!$habit) { $skipped++; continue; }
 
-                // Normalize logged_date to plain Y-m-d (DATE column) to avoid ISO datetime mismatch
                 $loggedDate = \Carbon\Carbon::parse($log['logged_date'])->toDateString();
 
                 $fill = [
@@ -234,7 +236,7 @@ class DataBackupPage extends Page
             // Notes: match by title
             $restore(Note::class, $d['notes'] ?? [], ['title']);
 
-            // Class Schedules: match by subject + day
+
             $restore(ClassSchedule::class, $d['class_schedules'] ?? [], ['subject', 'day']);
 
             // Class Assignments: match by title
@@ -288,7 +290,8 @@ class DataBackupPage extends Page
             ],
         ];
 
-        $encKey    = hash('sha256', config('app.key') . '::' . $user->id, true);
+        // Encrypt with APP_KEY only — portable across accounts on the same server
+        $encKey    = hash('sha256', config('app.key'), true);
         $iv        = random_bytes(16);
         $json      = json_encode($backup, JSON_UNESCAPED_UNICODE);
         $encrypted = openssl_encrypt($json, 'AES-256-CBC', $encKey, OPENSSL_RAW_DATA, $iv);
