@@ -83,7 +83,9 @@ class DataBackupPage extends Page
                         ->default('skip')
                         ->required(),
                 ])
-                ->action('performRestore'),
+                ->action(function (array $data) {
+                    $this->performRestore($data);
+                }),
 
             Action::make('download_backup')
                 ->label('Download Backup')

@@ -33,7 +33,6 @@ class SendHabitReminders extends Command
             $user = $habit->user;
             if (!$user) continue;
 
-            // Check frequency
             $shouldDoToday = false;
             if ($habit->frequency === 'daily') {
                 $shouldDoToday = true;
