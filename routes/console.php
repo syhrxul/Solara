@@ -13,3 +13,9 @@ Schedule::command('solara:notify-schedule')
     ->dailyAt('06:00')
     ->withoutOverlapping()
     ->description('Notifikasi jadwal kuliah harian');
+
+// 🔔 Pengecekan reminder_time habit setiap 1 menit (sesuai jam yang diset user)
+Schedule::command('solara:notify-habits')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->description('Pengingat Habit harian');

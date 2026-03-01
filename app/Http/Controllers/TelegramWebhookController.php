@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Task;
 use App\Models\ClassAssignment;
 use App\Models\ClassSchedule;
+use App\Models\Habit;
 use App\Services\TelegramService;
 use Carbon\Carbon;
 
@@ -44,25 +45,30 @@ class TelegramWebhookController extends Controller
             $keyboard = [
                 'keyboard' => [
                     [
-                        ['text' => '📋 Cek Tugas & Tasks'],
-                        ['text' => '🗓️ Jadwal Hari Ini']
+                        ['text' => '📋 Tugas'],
+                        ['text' => '🗓️ Jadwal'],
+                        ['text' => '🔄 Habits']
                     ]
                 ],
                 'resize_keyboard' => true,
                 'is_persistent' => true,
             ];
 
-            if ($text === '/start' || strtolower($text) === 'menu' || strtolower($text) === 'halo') {
+            $lowText = strtolower(trim($text));
+
+            if ($lowText === '/start' || $lowText === 'menu' || $lowText === 'halo') {
                 $this->telegram->sendMessage(
                     $chatId, 
-                    "Halo {$user->name} 👋\n\nSelamat datang di Bot Solara!\nSilakan gunakan menu di bawah untuk memeriksa jadwal atau tugas Anda secara cepat.", 
+                    "Halo {$user->name} 👋\n\nSelamat datang di Bot Solara!\nSilakan gunakan menu di bawah untuk memeriksa jadwal, tugas, dan habits Anda secara cepat.", 
                     'HTML', 
                     $keyboard
                 );
-            } elseif ($text === '📋 Cek Tugas & Tasks' || strtolower($text) === '/tasks' || strtolower($text) === '/tugas') {
+            } elseif (in_array($lowText, ['📋 tugas', '/tasks', '/tugas', 'tugas', 'tugas kuliah', 'tasks'])) {
                 $this->sendTasksAndAssignments($chatId, $user, $keyboard);
-            } elseif ($text === '🗓️ Jadwal Hari Ini' || strtolower($text) === '/jadwal') {
+            } elseif (in_array($lowText, ['🗓️ jadwal', '/jadwal', 'jadwal', 'jadwal kuliah'])) {
                 $this->sendTodaySchedule($chatId, $user, $keyboard);
+            } elseif (in_array($lowText, ['🔄 habits', '/habits', '/habit', 'habbit', 'habit', 'habits'])) {
+                $this->sendTodayHabits($chatId, $user, $keyboard);
             } else {
                 $this->telegram->sendMessage(
                     $chatId, 
@@ -134,6 +140,57 @@ class TelegramWebhookController extends Controller
             $msg .= "   ⏰ {$jam}\n";
             $msg .= "   🚪 Ruangan: " . ($sched->ruangan ?? 'Tidak disebutkan') . "\n";
             $msg .= "   👤 Dosen: " . ($sched->dosen ?? 'Tidak disebutkan') . "\n\n";
+        }
+
+        $this->telegram->sendMessage($chatId, $msg, 'HTML', $keyboard);
+    }
+
+    private function sendTodayHabits($chatId, User $user, $keyboard)
+    {
+        // Cari habit yang harus dikerjakan hari ini
+        $now = now();
+        $habits = Habit::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->get();
+
+        if ($habits->isEmpty()) {
+            $msg = "Anda belum merencanakan Habits (Kebiasaan) apapun. Mari bangun kebiasaan yang baik!";
+            $this->telegram->sendMessage($chatId, $msg, 'HTML', $keyboard);
+            return;
+        }
+
+        $msg = "🔄 <b>PANTAUAN HABITS ANDA HARI INI</b>\n\n";
+        $hasTarget = false;
+
+        foreach ($habits as $habit) {
+            // Check frequency
+            $dayOfWeek = strtolower($now->englishDayOfWeek);
+            $shouldDoToday = false;
+            
+            if ($habit->frequency === 'daily') {
+                $shouldDoToday = true;
+            } elseif ($habit->frequency === 'weekly') {
+                $days = is_string($habit->frequency_days) ? json_decode($habit->frequency_days, true) : $habit->frequency_days;
+                if (is_array($days) && in_array($dayOfWeek, $days)) {
+                    $shouldDoToday = true;
+                }
+            }
+
+            if ($shouldDoToday) {
+                $hasTarget = true;
+                $isDone = $habit->isCompletedToday();
+                $icon = $isDone ? "✅" : "⭕";
+                $strike = $isDone ? "<s>" : "";
+                $endStrike = $isDone ? "</s>" : "";
+                
+                $msg .= "{$icon} {$strike}<b>{$habit->name}</b>{$endStrike}\n";
+            }
+        }
+
+        if (!$hasTarget) {
+            $msg = "🎉 <b>Yeay!</b> Tidak ada target habit spesifik yang harus diselesaikan untuk hari ini. Waktu santai yang berkualitas untuk Anda!";
+        } else {
+            $msg .= "\n<i>Semangat menjaga rentetan prestasimu! Jangan sampai bolong ya!</i> 💪";
         }
 
         $this->telegram->sendMessage($chatId, $msg, 'HTML', $keyboard);
