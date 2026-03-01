@@ -244,7 +244,7 @@ class JadwalDashboard extends Page implements HasTable
                         'user_id' => auth()->id(),
                         'date' => $dateSq,
                         'type' => 'prayer_time',
-                        'value' => $ses['id'], // Gunakan value untuk mengurutkan (sortir) tabel 1 sampai 8
+                        'value' => $ses['id'], 
                         'details' => $ses
                     ]);
                 }

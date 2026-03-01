@@ -108,7 +108,7 @@
 
                 <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 flex flex-col items-start justify-between shadow-sm border border-gray-100 dark:border-gray-700">
                     <div class="flex items-center space-x-2 text-success-600 dark:text-success-400 mb-2">
-                        @svg('heroicon-o-cloud', 'w-5 h-5')
+                        @svg('heroicon-o-clock', 'w-5 h-5')
                         <span class="text-xs font-bold uppercase tracking-wider">Matahari</span>
                     </div>
                     <div class="w-full">
@@ -125,7 +125,7 @@
 
                 <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 flex flex-col items-start justify-between shadow-sm border border-gray-100 dark:border-gray-700">
                     <div class="flex items-center space-x-2 text-info-600 dark:text-info-400 mb-2">
-                        @svg('heroicon-o-water', 'w-5 h-5')
+                        @svg('heroicon-o-cloud', 'w-5 h-5')
                         <span class="text-xs font-bold uppercase tracking-wider">Kelembapan</span>
                     </div>
                     <div>
