@@ -1,159 +1,141 @@
 <x-filament-panels::page>
-    @php
-        $stats = [
-            ['label' => 'Tasks',          'icon' => '✅', 'count' => $this->backupStats['tasks'],       'color' => 'emerald'],
-            ['label' => 'Habits',         'icon' => '🔄', 'count' => $this->backupStats['habits'],      'color' => 'violet'],
-            ['label' => 'Habit Logs',     'icon' => '📒', 'count' => $this->backupStats['habit_logs'],  'color' => 'indigo'],
-            ['label' => 'Catatan',        'icon' => '🗒️', 'count' => $this->backupStats['notes'],       'color' => 'amber'],
-            ['label' => 'Jadwal Kuliah',  'icon' => '🎓', 'count' => $this->backupStats['schedules'],   'color' => 'sky'],
-            ['label' => 'Tugas Kuliah',   'icon' => '📚', 'count' => $this->backupStats['assignments'], 'color' => 'blue'],
-            ['label' => 'Transaksi',      'icon' => '💰', 'count' => $this->backupStats['finances'],    'color' => 'green'],
-            ['label' => 'Goals',          'icon' => '🎯', 'count' => $this->backupStats['goals'],       'color' => 'rose'],
-        ];
-        $total = array_sum(array_column($stats, 'count'));
-    @endphp
-
-    <div class="space-y-8">
-
-        {{-- === HERO SECTION === --}}
-        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-6 text-white shadow-xl">
-            {{-- Background pattern --}}
-            <div class="pointer-events-none absolute inset-0 opacity-10">
-                <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-                    <defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
-                        <path d="M 32 0 L 0 0 0 32" fill="none" stroke="white" stroke-width="0.5"/>
-                    </pattern></defs>
-                    <rect width="100%" height="100%" fill="url(#grid)"/>
-                </svg>
+    <div class="fi-section rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 bg-gradient-to-r from-violet-600 to-indigo-600 p-6 text-white mb-6">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+                <p class="text-xl font-bold tracking-tight">🔐 Backup Data Solara</p>
+                <p class="mt-1 text-sm opacity-80">Terenkripsi AES-256-CBC • Format <code class="fi-badge rounded-md px-1 bg-white/20">.slr</code> eksklusif</p>
+                <p class="mt-3 text-sm opacity-90 max-w-xl">
+                    Semua data personal Anda dikemas &amp; dienkripsi. File hanya bisa dibaca oleh sistem Solara dengan akun Anda sendiri.
+                </p>
             </div>
-
-            <div class="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-2xl backdrop-blur">🔐</div>
-                        <div>
-                            <h2 class="text-xl font-bold">Backup Data Solara</h2>
-                            <p class="text-sm text-violet-200">Terenkripsi AES-256-CBC • Format .slr eksklusif</p>
-                        </div>
+            <div class="fi-section rounded-lg bg-white/20 backdrop-blur px-5 py-3 text-center min-w-[130px]">
+                <p class="text-3xl font-extrabold tabular-nums">{{ array_sum($this->backupStats) }}</p>
+                <p class="text-xs opacity-80 mt-0.5">Total Record</p>
+                @if($this->lastBackupAt)
+                    <div class="border-t border-white/30 mt-2 pt-2">
+                        <p class="text-xs opacity-70">Terakhir Backup</p>
+                        <p class="text-sm font-semibold">{{ \Carbon\Carbon::parse($this->lastBackupAt)->locale('id')->diffForHumans() }}</p>
                     </div>
-                    <p class="mt-3 max-w-lg text-sm text-violet-100">
-                        Seluruh data personal Anda dikemas dan dienkripsi secara otomatis ke dalam file <code class="rounded bg-white/20 px-1 font-mono">.slr</code>.
-                        File ini hanya dapat dibaca oleh sistem Solara dengan akun Anda.
-                    </p>
-                </div>
-
-                <div class="flex-shrink-0 rounded-xl bg-white/15 p-4 text-center backdrop-blur">
-                    <p class="text-3xl font-extrabold">{{ number_format($total) }}</p>
-                    <p class="text-xs text-violet-200">Total Record</p>
-
-                    @if($this->lastBackupAt)
-                        <div class="mt-2 border-t border-white/20 pt-2">
-                            <p class="text-xs text-violet-200">Backup Terakhir</p>
-                            <p class="text-sm font-semibold">{{ \Carbon\Carbon::parse($this->lastBackupAt)->locale('id')->diffForHumans() }}</p>
-                        </div>
-                    @else
-                        <div class="mt-2 border-t border-white/20 pt-2">
-                            <p class="text-xs text-violet-300 italic">Belum pernah backup</p>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        {{-- === DATA STATS GRID === --}}
-        <div>
-            <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">📊 Ringkasan Data yang Akan Dibackup</h3>
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                @foreach($stats as $stat)
-                <div class="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition hover:shadow-md dark:border-gray-700 dark:bg-gray-900">
-                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-lg dark:bg-gray-800">
-                        {{ $stat['icon'] }}
+                @else
+                    <div class="border-t border-white/30 mt-2 pt-2">
+                        <p class="text-xs opacity-60 italic">Belum pernah backup</p>
                     </div>
-                    <div class="min-w-0">
-                        <p class="text-xl font-bold text-gray-800 dark:text-white">{{ number_format($stat['count']) }}</p>
-                        <p class="truncate text-xs text-gray-500 dark:text-gray-400">{{ $stat['label'] }}</p>
-                    </div>
-                </div>
-                @endforeach
+                @endif
             </div>
         </div>
-
-        {{-- === INFO CARDS === --}}
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-800 dark:bg-emerald-950/40">
-                <div class="flex items-center gap-2 mb-3">
-                    <span class="text-lg">✅</span>
-                    <h4 class="font-semibold text-emerald-800 dark:text-emerald-300">Yang Termasuk dalam Backup</h4>
-                </div>
-                <ul class="space-y-1.5 text-sm text-emerald-700 dark:text-emerald-400">
-                    @foreach([['✅','Tasks & to-do list'],['🔄','Habits & log penyelesaian'],['🗒️','Catatan (Notes)'],['🎓','Jadwal & tugas kuliah'],['💰','Transaksi keuangan'],['🎯','Goals & milestones']] as [$ic,$label])
-                    <li class="flex items-center gap-2"><span>{{ $ic }}</span> {{ $label }}</li>
-                    @endforeach
-                </ul>
-            </div>
-            <div class="rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-800 dark:bg-amber-950/40">
-                <div class="flex items-center gap-2 mb-3">
-                    <span class="text-lg">🔐</span>
-                    <h4 class="font-semibold text-amber-800 dark:text-amber-300">Tentang Format .slr</h4>
-                </div>
-                <ul class="space-y-1.5 text-sm text-amber-700 dark:text-amber-400">
-                    @foreach([['�','Format biner eksklusif Solara'],['🔑','Enkripsi AES-256-CBC per-akun'],['🚫','Tidak bisa dibaca text editor'],['🛡️','Kunci unik: APP_KEY + user ID'],['💾','Simpan di tempat yang aman']] as [$ic,$label])
-                    <li class="flex items-center gap-2"><span>{{ $ic }}</span> {{ $label }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        </div>
-
-        {{-- === BACKUP HISTORY LOG === --}}
-        <div>
-            <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">🕓 Riwayat Backup</h3>
-
-            @if(empty($this->backupHistory))
-                <div class="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 py-10 text-center dark:border-gray-700 dark:bg-gray-900">
-                    <p class="text-3xl mb-2">📭</p>
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Belum ada riwayat backup</p>
-                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Klik "Download Backup Sekarang" untuk memulai backup pertama Anda.</p>
-                </div>
-            @else
-                <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-800">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">#</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Waktu Backup</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Nama File</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Ukuran</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Record</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 bg-white dark:divide-gray-800 dark:bg-gray-900">
-                            @foreach($this->backupHistory as $i => $log)
-                            @php
-                                $dt     = \Carbon\Carbon::parse($log['created_at'])->locale('id');
-                                $sizeKb = round($log['size_bytes'] / 1024, 1);
-                            @endphp
-                            <tr class="transition hover:bg-gray-50 dark:hover:bg-gray-800 {{ $i === 0 ? 'bg-violet-50/50 dark:bg-violet-950/20' : '' }}">
-                                <td class="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">
-                                    {{ $i + 1 }}
-                                    @if($i === 0)<span class="ml-1 rounded-full bg-violet-100 px-1.5 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900 dark:text-violet-300">Terbaru</span>@endif
-                                </td>
-                                <td class="px-4 py-3">
-                                    <p class="text-sm font-medium text-gray-800 dark:text-gray-100">{{ $dt->isoFormat('D MMM YYYY, HH:mm') }}</p>
-                                    <p class="text-xs text-gray-400 dark:text-gray-500">{{ $dt->diffForHumans() }}</p>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <code class="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300">{{ $log['filename'] }}</code>
-                                </td>
-                                <td class="px-4 py-3 text-right text-sm text-gray-600 dark:text-gray-300">{{ $sizeKb }} KB</td>
-                                <td class="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-200">{{ number_format($log['total_records']) }}</td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                <p class="mt-2 text-xs text-gray-400 dark:text-gray-500 text-right">Menampilkan {{ count($this->backupHistory) }} riwayat terakhir (maks. 20)</p>
-            @endif
-        </div>
-
     </div>
+
+    {{-- Stats Grid --}}
+    <x-filament::section>
+        <x-slot name="heading">📊 Ringkasan Data</x-slot>
+        <x-slot name="description">Data yang akan dimasukkan ke dalam file backup</x-slot>
+
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            @foreach([
+                ['Tasks',           '✅', $this->backupStats['tasks']],
+                ['Habits',          '🔄', $this->backupStats['habits']],
+                ['Habit Logs',      '📒', $this->backupStats['habit_logs']],
+                ['Catatan',         '🗒️', $this->backupStats['notes']],
+                ['Jadwal Kuliah',   '🎓', $this->backupStats['schedules']],
+                ['Tugas Kuliah',    '📚', $this->backupStats['assignments']],
+                ['Transaksi',       '💰', $this->backupStats['finances']],
+                ['Goals',           '🎯', $this->backupStats['goals']],
+            ] as [$label, $icon, $count])
+            <div class="fi-section rounded-xl ring-1 ring-gray-950/5 dark:ring-white/10 bg-white dark:bg-gray-900 px-4 py-3 flex items-center gap-3 shadow-sm">
+                <span class="text-2xl leading-none">{{ $icon }}</span>
+                <div>
+                    <p class="text-lg font-bold tabular-nums leading-none text-gray-900 dark:text-white">{{ number_format($count) }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $label }}</p>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </x-filament::section>
+
+    {{-- Info Cards --}}
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <x-filament::section>
+            <x-slot name="heading">✅ Yang Termasuk Backup</x-slot>
+            <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                @foreach([
+                    ['✅','Tasks & to-do list personal'],
+                    ['🔄','Habits beserta log penyelesaian'],
+                    ['🗒️','Catatan (Notes)'],
+                    ['🎓','Jadwal & tugas kuliah'],
+                    ['💰','Transaksi keuangan'],
+                    ['🎯','Goals & milestones'],
+                ] as [$ic,$label])
+                <li class="flex items-center gap-2"><span>{{ $ic }}</span> {{ $label }}</li>
+                @endforeach
+            </ul>
+        </x-filament::section>
+
+        <x-filament::section>
+            <x-slot name="heading">🔐 Tentang Format .slr</x-slot>
+            <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                @foreach([
+                    ['📁','Format biner eksklusif Solara'],
+                    ['🔑','Enkripsi AES-256-CBC per-akun'],
+                    ['🚫','Tidak bisa dibuka teks editor biasa'],
+                    ['🛡️','Kunci unik: APP_KEY + User ID'],
+                    ['💾','Simpan di Google Drive / tempat aman'],
+                ] as [$ic,$label])
+                <li class="flex items-center gap-2"><span>{{ $ic }}</span> {{ $label }}</li>
+                @endforeach
+            </ul>
+        </x-filament::section>
+    </div>
+
+    {{-- Backup History --}}
+    <x-filament::section>
+        <x-slot name="heading">🕓 Riwayat Backup</x-slot>
+        <x-slot name="description">Log backup yang pernah Anda lakukan (maks. 20 terakhir)</x-slot>
+
+        @if(empty($this->backupHistory))
+            <div class="py-10 text-center">
+                <p class="text-4xl mb-3">📭</p>
+                <p class="font-medium text-gray-600 dark:text-gray-400">Belum ada riwayat backup</p>
+                <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">Klik "Download Backup Sekarang" di pojok kanan atas untuk memulai.</p>
+            </div>
+        @else
+            <div class="overflow-x-auto">
+                <table class="fi-ta-table w-full table-auto divide-y divide-gray-200 text-sm dark:divide-white/5">
+                    <thead>
+                        <tr class="bg-gray-50 dark:bg-white/5">
+                            <th class="fi-ta-header-cell px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">#</th>
+                            <th class="fi-ta-header-cell px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Waktu Backup</th>
+                            <th class="fi-ta-header-cell px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Nama File</th>
+                            <th class="fi-ta-header-cell px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Ukuran</th>
+                            <th class="fi-ta-header-cell px-3 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Record</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+                        @foreach($this->backupHistory as $i => $log)
+                        @php
+                            $dt = \Carbon\Carbon::parse($log['created_at'])->locale('id');
+                            $kb = round($log['size_bytes'] / 1024, 1);
+                        @endphp
+                        <tr class="{{ $i === 0 ? 'bg-violet-50 dark:bg-violet-950/20' : 'bg-white dark:bg-gray-900' }} hover:bg-gray-50 dark:hover:bg-white/5 transition">
+                            <td class="fi-ta-cell px-3 py-3 text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                                {{ $i + 1 }}
+                                @if($i === 0)
+                                    <x-filament::badge color="violet" size="xs" class="ml-1">Terbaru</x-filament::badge>
+                                @endif
+                            </td>
+                            <td class="fi-ta-cell px-3 py-3 whitespace-nowrap">
+                                <p class="font-medium text-gray-900 dark:text-white">{{ $dt->isoFormat('D MMM YYYY, HH:mm') }}</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500">{{ $dt->diffForHumans() }}</p>
+                            </td>
+                            <td class="fi-ta-cell px-3 py-3">
+                                <code class="rounded bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs text-gray-700 dark:text-gray-300">{{ $log['filename'] }}</code>
+                            </td>
+                            <td class="fi-ta-cell px-3 py-3 text-right text-gray-600 dark:text-gray-300 whitespace-nowrap">{{ $kb }} KB</td>
+                            <td class="fi-ta-cell px-3 py-3 text-right font-medium text-gray-700 dark:text-gray-200 whitespace-nowrap">{{ number_format($log['total_records']) }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </x-filament::section>
 </x-filament-panels::page>
