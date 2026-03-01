@@ -140,6 +140,7 @@ class JadwalDashboard extends Page implements HasTable
 
         $this->loadPrayerTimes();
         $this->dispatch('location-changed')->to(\App\Filament\Widgets\JadwalOverview::class);
+        $this->dispatch('location-changed')->to(\App\Filament\Widgets\WeatherForecastWidget::class);
     }
 
     public function searchAndSetLocation(string $city)
@@ -195,6 +196,7 @@ class JadwalDashboard extends Page implements HasTable
     {
         return [
             \App\Filament\Widgets\JadwalOverview::class,
+            \App\Filament\Widgets\WeatherForecastWidget::class,
         ];
     }
 
