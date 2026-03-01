@@ -255,14 +255,14 @@ class DataBackupPage extends Page
             // Notes: match by title
             $restore(Note::class, $d['notes'] ?? [], ['title']);
 
-
-            $restore(ClassSchedule::class, $d['class_schedules'] ?? [], ['subject', 'day']);
+            // Class Schedules: match by mata_kuliah + hari (correct column names)
+            $restore(ClassSchedule::class, $d['class_schedules'] ?? [], ['mata_kuliah', 'hari']);
 
             // Class Assignments: match by title
             $restore(ClassAssignment::class, $d['class_assignments'] ?? [], ['title']);
 
-            // Finance Transactions: match by amount + date + type
-            $restore(FinanceTransaction::class, $d['finance_transactions'] ?? [], ['amount', 'date', 'type']);
+            // Finance Transactions: match by amount + transaction_date + type (correct column name)
+            $restore(FinanceTransaction::class, $d['finance_transactions'] ?? [], ['amount', 'transaction_date', 'type']);
 
             // Goals: match by title
             $restore(Goal::class, $d['goals'] ?? [], ['title'], ['milestones']);
