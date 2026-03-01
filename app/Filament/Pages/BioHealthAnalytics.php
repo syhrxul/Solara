@@ -148,95 +148,140 @@ class BioHealthAnalytics extends Page implements HasTable
             $this->weather = null;
         }
 
+        // 2. Correlation with Sleep Data (7 Days Analysis)
         $metrics = HealthMetric::where('user_id', auth()->id())
             ->where('type', 'sleep')
             ->orderBy('date', 'desc')
             ->take(7)
             ->get();
 
-        $sleepDuration = 0;
         $wokeUpHourFormatted = '06:00';
-        $avgDuration = 0;
 
         if ($metrics->isNotEmpty()) {
-            $recentDate = $metrics->first()->date->toDateString();
-            $recentSleep = $metrics->filter(function($m) use ($recentDate) {
-                return $m->date->toDateString() === $recentDate;
-            });
-            $sleepDuration = $recentSleep->sum('value');
+            
+
+            $totalSleepDays = $metrics->count();
             $avgDuration = $metrics->avg('value');
-
-            // Find recent time bed and wake up
-            $recentTimeBed = $recentSleep->first()->details['time_bed'] ?? '23:00';
-            $recentTimeWakeup = $recentSleep->first()->details['time_wakeup'] ?? '06:00';
             
-            $wokeUpHourFormatted = $recentTimeWakeup;
-
-            // Check golden hour (23:00 to 02:00)
-            $hBed = (int) explode(':', $recentTimeBed)[0];
+            $sleepTimes = [];
+            $wakeTimes = [];
             
-            // Evaluasi jam mulai tidur (Kebiasaan)
-            $strHabit = "Tidur terakhir sekitar jam $recentTimeBed, bangun jam $recentTimeWakeup. ";
-            if ($hBed >= 23 || $hBed < 2) {
-                $strHabit .= "Sangat baik, Anda beristirahat di rentang Golden Hour (23:00 - 02:00), optimal untuk regenerasi sel otak dan hormon tubuh.";
-            } elseif ($hBed >= 2 && $hBed < 6) {
-                $strHabit .= "Anda melewatkan Golden Hour (tidur di atas jam 2 pagi). Ritme sirkadian Anda mungkin tertanggu.";
-            } elseif ($hBed < 23 && $hBed > 18) {
-                $strHabit .= "Anda tidur cukup awal hari ini, waktu yang sangat bagus untuk pemulihan jangka panjang.";
-            }
+            $goldenHourHits = 0;
+            
+            foreach ($metrics as $m) {
 
-            if ($sleepDuration > 0 && $this->weather) {
-                $statusColor = 'info';
-                $statusIcon = 'heroicon-o-check-badge';
-                $title = "Analisis Tidur & Golden Hour";
-                $message = "Total tidur terakhir: " . round($sleepDuration, 1) . " jam rata-rata seminggu ini " . round($avgDuration, 1) . " jam. {$strHabit}";
-                
-                $tips = [];
+                $timeBedStr = $m->details['time_bed'] ?? '23:00';
+                $tH = (int) explode(':', $timeBedStr)[0];
+                $tM = (int) explode(':', $timeBedStr)[1];
+                $bedMinutes = ($tH * 60) + $tM;
+                if ($tH < 12) {
+                    $bedMinutes += (24 * 60);
+                }
+                $sleepTimes[] = $bedMinutes;
 
-                if ($sleepDuration < 6) {
-                    $statusColor = 'warning';
-                    $statusIcon = 'heroicon-o-battery-50';
-                    $title = "Defisit Waktu Tidur";
-                    $message .= " Kekurangan jam tidur dapat menyebabkan brain-fog dan kelelahan instan hari ini.";
-                    
-                    $tips[] = "Lakukan 'Power Nap' di siang hari (10-20 menit) untuk memompa kewaspadaan.";
-                    $tips[] = "Redupkan layar dan hindari kafein 4-6 jam sebelum waktu tidur berikutnya agar Anda bisa tidur lebih cepat (jam 22:00).";
-                    $tips[] = "Gunakan teknik relaksasi / meditasi 10 menit sebelum tidur agar bisa langsung tertidur pulas.";
-                } elseif ($sleepDuration >= 7) {
-                     $statusColor = 'success';
-                     $statusIcon = 'heroicon-o-battery-100';
-                     $title = "Kondisi Fisik Prima";
-                     $message .= " Jumlah jam tidur Anda mencukupi fase Deep Sleep.";
-                     $tips[] = "Hari ini ideal untuk Deep Work / pekerjaan berat yang butuh konsentrasi tinggi.";
-                     $tips[] = "Coba terus pertahankan jam tidur di bawah 11 malam (Golden Hour) untuk rutinitas stabil.";
-                } else {
-                     $tips[] = "Durasi tidur lumayan, namun usahakan sentuh 7-8 jam.";
-                     $tips[] = "Cobalah mematikan perangkat elektronik minimal 30 menit sebelum tidur untuk mempercepat ngantuk.";
+                if ($tH >= 22 || $tH < 2) {
+                    $goldenHourHits++;
                 }
 
-                $this->sleepCorrelation = [
-                    'color' => $statusColor,
-                    'icon' => $statusIcon,
-                    'title' => $title,
-                    'message' => $message,
-                    'tips' => $tips,
-                ];
-            } else {
-                $this->sleepCorrelation = [
-                    'color' => 'gray',
-                    'icon' => 'heroicon-o-information-circle',
-                    'title' => 'Data Tidur Kurang',
-                    'message' => 'Tarik data terbaru dari Google Fit.',
-                    'tips' => ['Sinkronkan data melalui Log Tidur'],
-                ];
+                $wakeStr = $m->details['time_wakeup'] ?? '06:00';
+                $wH = (int) explode(':', $wakeStr)[0];
+                $wM = (int) explode(':', $wakeStr)[1];
+                $wakeTimes[] = ($wH * 60) + $wM;
             }
+
+            $durationScore = 40;
+            if ($avgDuration < 7) {
+                $durationScore = max(0, 40 - ((7 - $avgDuration) * 10));
+            } elseif ($avgDuration > 9) {
+                $durationScore = max(0, 40 - (($avgDuration - 9) * 10)); 
+            }
+
+            $consistencyScore = 30;
+            if ($totalSleepDays > 1) {
+                $maxWake = max($wakeTimes);
+                $minWake = min($wakeTimes);
+                $diffHours = ($maxWake - $minWake) / 60;
+
+                if ($diffHours > 2) {
+                    $consistencyScore = max(0, 30 - (($diffHours - 2) * 5)); 
+                }
+            }
+
+
+            $goldenRatio = $goldenHourHits / $totalSleepDays;
+            $goldenHourScore = round($goldenRatio * 30);
+
+
+            $sleepScore = round($durationScore + $consistencyScore + $goldenHourScore);
+
+            $recentSleep = $metrics->first();
+            $recentTimeBed = $recentSleep->details['time_bed'] ?? '23:00';
+            $recentTimeWakeup = $recentSleep->details['time_wakeup'] ?? '06:00';
+            $wokeUpHourFormatted = $recentTimeWakeup;
+            $hBed = (int) explode(':', $recentTimeBed)[0];
+
+
+            $statusColor = 'success';
+            $statusIcon = 'heroicon-o-check-badge';
+            $title = "Analisis Tidur Mingguan (Score: {$sleepScore}/100)";
+
+            $message = "Berdasarkan rutinitas {$totalSleepDays} hari terakhir, sistem menyimpulkan kualitas tidur Anda berada di tingkat **";
+            
+            $tips = [];
+
+            if ($sleepScore >= 85) {
+                $statusColor = 'success';
+                $statusIcon = 'heroicon-o-star';
+                $message .= "Sangat Baik (Excellent)**.";
+                $message .= " Rata-rata tidur " . round($avgDuration, 1) . " jam/hari dan ritme bangun Anda sangat konsisten. Golden hour tercapai dengan mantap.";
+                
+                $tips[] = "Pertahankan ritme ini karena sangat bagus untuk fokus harianmu.";
+                $tips[] = "Lanjutkan produktivitas tinggi Anda di pagi hari saat energi lagi full.";
+            } elseif ($sleepScore >= 65) {
+                $statusColor = 'info';
+                $statusIcon = 'heroicon-o-hand-thumb-up';
+                $message .= "Cukup Baik (Fair)**.";
+                $message .= " Rata-rata tidur " . round($avgDuration, 1) . " jam/hari. Pola tidur sudah lumayan, tapi ada beberapa malam di atas jam 2 pagi atau jadwal bangun beda jauh.";
+
+                $tips[] = "Supaya makin bugar besok harinya, coba usahakan tidur sebelum jam 23:00.";
+                $tips[] = "Usahakan saat akhir pekan tidak bangun terlalu siang agar ritme jam tubuh tidak kaget.";
+            } elseif ($sleepScore >= 40) {
+                $statusColor = 'warning';
+                $statusIcon = 'heroicon-o-exclamation-triangle';
+                $message .= "Kurang (Poor)**.";
+                $message .= " Rata-rata " . round($avgDuration, 1) . " jam/hari. Polamu sedang sedikit berantakan belakangan ini, mulai sering begadang di luar area Golden Hour.";
+
+                $tips[] = "Minimalisir main gadget 1 jam sebelum target tidurmu ya.";
+                $tips[] = "Boleh banget cobain Power Nap / tidur siang kilat (10-20 menit) buat nge-boost sisa harimu.";
+            } else {
+                $statusColor = 'danger';
+                $statusIcon = 'heroicon-o-shield-exclamation';
+                $message .= "Sangat Kurang (Critical)**.";
+                $message .= " Rata-rata tidur cuma " . round($avgDuration, 1) . " jam/hari dan jarak jam bangunnya kurang konsisten. Badan pasti berasa lumayan capek nih buat jalanin hari.";
+
+                $tips[] = "Coba malam ini tidur lebih awal yuk untuk bayar hutang tidurmu yang numpuk.";
+                $tips[] = "Kurangi minum kopi/teh terlalu sore supaya malam harinya lebih mudah terlelap.";
+            }
+
+            // Tambahkan insight kebiasaan terakhir
+            $strHabit = " *Catatan Ekstra: Semalam tidur jam {$recentTimeBed}, bangun {$recentTimeWakeup}.*";
+            $message .= $strHabit;
+
+            $this->sleepCorrelation = [
+                'color' => $statusColor,
+                'icon' => $statusIcon,
+                'title' => $title,
+                'message' => $message,
+                'tips' => $tips,
+            ];
+
         } else {
             $this->sleepCorrelation = [
                 'color' => 'gray',
                 'icon' => 'heroicon-o-information-circle',
                 'title' => 'Data Tidur Kosong',
-                'message' => 'Belum ada histori tidur.',
-                'tips' => ['Tarik dari Data Google Fit'],
+                'message' => 'Belum ada histori tidur minimal 1 hari terakhir.',
+                'tips' => ['Tarik Histori Tidur dari Data Google Fit di tab Log Tidur'],
             ];
         }
 
