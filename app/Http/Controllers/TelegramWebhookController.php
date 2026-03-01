@@ -8,6 +8,7 @@ use App\Models\Task;
 use App\Models\ClassAssignment;
 use App\Models\ClassSchedule;
 use App\Models\Habit;
+use App\Models\HabitLog;
 use App\Services\TelegramService;
 use Carbon\Carbon;
 
@@ -83,6 +84,9 @@ class TelegramWebhookController extends Controller
             $this->sendTodaySchedule($chatId, $user, $keyboard);
         } elseif (in_array($lowText, ['🔄 habits', '/habits', '/habit', 'habbit', 'habit', 'habits'])) {
             $this->sendTodayHabits($chatId, $user, $keyboard);
+        } elseif (str_starts_with($lowText, 'chk_hab_')) {
+            $habitId = str_replace('chk_hab_', '', $lowText);
+            $this->markHabitComplete($chatId, $user, $habitId, $message['message_id']);
         } else {
             $this->telegram->sendMessage(
                 $chatId, 
@@ -160,7 +164,6 @@ class TelegramWebhookController extends Controller
 
     private function sendTodayHabits($chatId, User $user, $keyboard)
     {
-        // Cari habit yang harus dikerjakan hari ini
         $now = now();
         $habits = Habit::where('user_id', $user->id)
             ->where('is_active', true)
@@ -172,11 +175,11 @@ class TelegramWebhookController extends Controller
             return;
         }
 
-        $msg = "🔄 <b>PANTAUAN HABITS ANDA HARI INI</b>\n\n";
+        $this->telegram->sendMessage($chatId, "🔄 <b>PANTAUAN HABITS ANDA HARI INI</b>\nBerikut adalah deretan Habit yang perlu Anda kerjakan:", 'HTML', $keyboard);
+
         $hasTarget = false;
 
         foreach ($habits as $habit) {
-            // Check frequency
             $dayOfWeek = strtolower($now->englishDayOfWeek);
             $shouldDoToday = false;
             
@@ -192,20 +195,77 @@ class TelegramWebhookController extends Controller
             if ($shouldDoToday) {
                 $hasTarget = true;
                 $isDone = $habit->isCompletedToday();
-                $icon = $isDone ? "✅" : "⭕";
-                $strike = $isDone ? "<s>" : "";
-                $endStrike = $isDone ? "</s>" : "";
-                
-                $msg .= "{$icon} {$strike}<b>{$habit->name}</b>{$endStrike}\n";
+
+                if ($isDone) {
+                    $msg = "✅ <s><b>{$habit->name}</b></s>\nAnda sudah menyelesaikan ini hari ini! Streak: <b>{$habit->current_streak} 🔥</b>";
+                    $this->telegram->sendMessage($chatId, $msg, 'HTML');
+                } else {
+                    $msg = "⭕ <b>{$habit->name}</b>\n\nYuk jalankan segera untuk mempertahankan Streak Anda: <b>{$habit->current_streak} 🔥</b>";
+                    $inlineBtn = [
+                        'inline_keyboard' => [
+                            [
+                                ['text' => '✅ Tandai Selesai', 'callback_data' => 'chk_hab_' . $habit->id]
+                            ]
+                        ]
+                    ];
+                    $this->telegram->sendMessage($chatId, $msg, 'HTML', $inlineBtn);
+                }
             }
         }
 
         if (!$hasTarget) {
             $msg = "🎉 <b>Yeay!</b> Tidak ada target habit spesifik yang harus diselesaikan untuk hari ini. Waktu santai yang berkualitas untuk Anda!";
-        } else {
-            $msg .= "\n<i>Semangat menjaga rentetan prestasimu! Jangan sampai bolong ya!</i> 💪";
+            $this->telegram->sendMessage($chatId, $msg, 'HTML', $keyboard);
+        }
+    }
+
+    private function markHabitComplete($chatId, User $user, $habitId, $messageId)
+    {
+        $habit = Habit::where('id', $habitId)->where('user_id', $user->id)->first();
+        if (!$habit) {
+            $this->telegram->editMessageText($chatId, $messageId, "Habit tidak ditemukan.", 'HTML');
+            return;
         }
 
-        $this->telegram->sendMessage($chatId, $msg, 'HTML', $keyboard);
+        if ($habit->isCompletedToday()) {
+            $this->telegram->editMessageText($chatId, $messageId, "✅ <b>{$habit->name}</b> sudah diselesaikan!", 'HTML');
+            sleep(3);
+            $this->telegram->deleteMessage((string)$chatId, (int)$messageId);
+        } else {
+            HabitLog::updateOrCreate(
+                [
+                    'habit_id' => $habit->id,
+                    'user_id' => $user->id,
+                    'logged_date' => today(),
+                ],
+                [
+                    'completed' => true,
+                    'count' => $habit->target_count ?? 1,
+                ]
+            );
+
+            $newStreak = $habit->current_streak + 1;
+            $habit->update([
+                'current_streak' => $newStreak,
+                'longest_streak' => max($habit->longest_streak, $newStreak),
+            ]);
+
+            $motivationalMessages = [
+                "Luar biasa! 🔥",
+                "Keren banget! 🚀",
+                "Mantap jiwa! 💪",
+                "Fantastic! Jangan kasih kendor! 🌟",
+                "Sempurna! Terus bertumbuh! 🌱"
+            ];
+            $motivasi = $motivationalMessages[array_rand($motivationalMessages)];
+
+            $newMsg = "{$motivasi}\n✅ <b>{$habit->name}</b> berhasil diselesaikan!\n\nStreak saat ini memanjang jadi: <b>{$newStreak} 🔥</b>\n\n<i>Pesan ini akan otomatis dihapus dalam 5 detik...</i>";
+            
+            $this->telegram->editMessageText($chatId, $messageId, $newMsg, 'HTML');
+            
+            // Delete directly after 5 seconds to avoid requiring Queue Worker
+            sleep(5);
+            $this->telegram->deleteMessage((string)$chatId, (int)$messageId);
+        }
     }
 }

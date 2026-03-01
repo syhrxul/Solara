@@ -51,6 +51,44 @@ class TelegramService
         }
     }
 
+    public function editMessageText(string $chatId, int $messageId, string $message, ?string $parseMode = 'HTML', ?array $replyMarkup = null): bool
+    {
+        try {
+            $payload = [
+                'chat_id'    => $chatId,
+                'message_id' => $messageId,
+                'text'       => $message,
+                'parse_mode' => $parseMode,
+            ];
+
+            if ($replyMarkup) {
+                $payload['reply_markup'] = json_encode($replyMarkup);
+            }
+
+            $response = Http::post("{$this->apiUrl}/editMessageText", $payload);
+
+            return $response->successful() && $response->json('ok');
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    public function deleteMessage(string $chatId, int $messageId): bool
+    {
+        try {
+            $payload = [
+                'chat_id'    => $chatId,
+                'message_id' => $messageId,
+            ];
+
+            $response = Http::post("{$this->apiUrl}/deleteMessage", $payload);
+
+            return $response->successful() && $response->json('ok');
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
     /**
      * Set a webhook for Telegram bot.
      */
