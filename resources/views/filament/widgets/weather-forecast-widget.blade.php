@@ -40,18 +40,7 @@
         @endphp
 
         <x-filament::section class="overflow-hidden">
-            <!-- Jumbotron Cuaca -->
-            <div class="relative rounded-xl p-5 text-white overflow-hidden shadow-sm bg-gradient-to-br {{ $isGlobalNight ? 'from-slate-800 to-slate-900' : 'from-blue-500 to-sky-400' }}">
-                <div class="relative z-10 flex flex-col items-center justify-center text-center">
-                    <h2 class="text-xl font-medium tracking-wide">{{ $locationName }}</h2>
-                    <p class="text-5xl font-semibold mt-2 mb-1 drop-shadow-md">{{ round($tempNow) }}°</p>
-                    <p class="text-sm font-medium tracking-wide drop-shadow">{{ $currentDesc }}</p>
-                    <div class="flex items-center space-x-3 mt-1 opacity-90 text-xs">
-                        <span>H: {{ $this->highTemp }}°</span>
-                        <span>L: {{ $this->lowTemp }}°</span>
-                    </div>
-                </div>
-            </div>
+
 
             <!-- Tabel Data 24 Jam Dari DB Filament -->
             <div class="mt-4 w-full [&_.fi-ta-empty-state]:bg-transparent">
