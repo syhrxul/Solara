@@ -115,8 +115,8 @@ class TelegramWebhookController extends Controller
 
         if ($assignments->isNotEmpty()) {
             $msg .= "<b>📚 TUGAS KULIAH:</b>\n";
-            $assignWithDeadline = $assignments->whereNotNull('deadline');
-            $assignWithout = $assignments->whereNull('deadline');
+            $assignWithDeadline = $assignments->filter(function($a) { return !empty($a->deadline); });
+            $assignWithout = $assignments->filter(function($a) { return empty($a->deadline); });
 
             foreach ($assignWithDeadline as $idx => $tugas) {
                 $batasWaktu = $tugas->deadline->format('d M Y');
@@ -141,8 +141,8 @@ class TelegramWebhookController extends Controller
 
         if ($tasks->isNotEmpty()) {
             $msg .= "<b>✅ TO-DO LIST (TASKS):</b>\n";
-            $tasksWithDeadline = $tasks->whereNotNull('due_date');
-            $tasksWithout = $tasks->whereNull('due_date');
+            $tasksWithDeadline = $tasks->filter(function($t) { return !empty($t->due_date); });
+            $tasksWithout = $tasks->filter(function($t) { return empty($t->due_date); });
 
             foreach ($tasksWithDeadline as $idx => $task) {
                 $batasTgl = $task->due_date->format('d M Y');
