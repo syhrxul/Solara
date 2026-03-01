@@ -54,9 +54,6 @@
         </div>
     </x-filament::section>
 
-    {{-- ============================================================ --}}
-    {{-- INFO CARDS --}}
-    {{-- ============================================================ --}}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <x-filament::section>
             <x-slot name="heading">✅ Yang Termasuk Backup</x-slot>
@@ -94,9 +91,26 @@
         </x-filament::section>
     </div>
 
-    {{-- ============================================================ --}}
-    {{-- RIWAYAT BACKUP --}}
-    {{-- ============================================================ --}}
+    {{-- RESTORE GUIDE --}}
+    <x-filament::section>
+        <x-slot name="heading">🔁 Cara Restore Data</x-slot>
+        <x-slot name="description">Kembalikan data dari file backup .slr yang pernah Anda buat</x-slot>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+            @foreach([
+                ['1','Klik tombol "Restore Backup" di pojok kanan atas'],
+                ['2','Upload file .slr yang pernah Anda download'],
+                ['3','Pilih mode: Skip (pertahankan data lama) atau Overwrite (timpa data lama)'],
+                ['4','Klik "Mulai Restore" — sistem akan mendekripsi dan mengimpor data otomatis'],
+                ['5','Laporan hasil restore (diimport / dilewati / ditimpa) akan tampil setelah selesai'],
+            ] as [$num, $step])
+            <div style="display:flex;align-items:flex-start;gap:12px;">
+                <span style="background:#ede9fe;color:#5b21b6;border-radius:9999px;font-size:0.75rem;font-weight:700;min-width:1.5rem;height:1.5rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">{{ $num }}</span>
+                <p style="font-size:0.875rem;margin:0;padding-top:1px;" class="text-gray-600 dark:text-gray-400">{{ $step }}</p>
+            </div>
+            @endforeach
+        </div>
+    </x-filament::section>
+
     <x-filament::section>
         <x-slot name="heading">🕓 Riwayat Backup</x-slot>
         <x-slot name="description">Log backup yang pernah Anda lakukan (maks. 20 terakhir)</x-slot>

@@ -6,14 +6,19 @@ use App\Models\ClassAssignment;
 use App\Models\ClassSchedule;
 use App\Models\FinanceTransaction;
 use App\Models\Goal;
+use App\Models\GoalMilestone;
 use App\Models\Habit;
 use App\Models\HabitLog;
 use App\Models\Note;
 use App\Models\Task;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Radio;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use UnitEnum;
 
 class DataBackupPage extends Page
@@ -46,25 +51,203 @@ class DataBackupPage extends Page
         ];
 
         $history = $settings['backup_history'] ?? [];
-        $this->backupHistory = array_reverse(array_slice($history, -20)); 
+        $this->backupHistory = array_reverse(array_slice($history, -20));
         $this->lastBackupAt = !empty($history) ? end($history)['created_at'] : null;
     }
 
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('restore_backup')
+                ->label('Restore Backup')
+                ->icon('heroicon-o-arrow-up-tray')
+                ->color('warning')
+                ->modalHeading('Restore Data dari File .slr')
+                ->modalDescription('Upload file backup Solara (.slr) Anda, lalu pilih bagaimana menangani data yang sudah ada.')
+                ->modalSubmitActionLabel('Mulai Restore')
+                ->modalWidth('lg')
+                ->form([
+                    FileUpload::make('backup_file')
+                        ->label('File Backup (.slr)')
+                        ->disk('local')
+                        ->directory('tmp-restore')
+                        ->required()
+                        ->helperText('Hanya file .slr yang dihasilkan oleh Solara yang valid.'),
+
+                    Radio::make('conflict_mode')
+                        ->label('Jika data sudah ada di database')
+                        ->options([
+                            'skip'      => '⏭️ Lewati (Skip) — data lama dipertahankan',
+                            'overwrite' => '🔄 Timpa (Overwrite) — data lama diganti dengan data backup',
+                        ])
+                        ->default('skip')
+                        ->required(),
+                ])
+                ->action('performRestore'),
+
             Action::make('download_backup')
-                ->label('Download Backup Sekarang')
+                ->label('Download Backup')
                 ->icon('heroicon-o-cloud-arrow-down')
                 ->color('success')
                 ->requiresConfirmation()
                 ->modalHeading('Konfirmasi Backup Data')
-                ->modalDescription('Seluruh data akun Anda akan dikemas dalam satu file slr. Proses ini aman dan hanya mencakup data milik Anda. Lanjutkan?')
+                ->modalDescription('Seluruh data akun Anda akan dikemas dalam satu file .slr yang terenkripsi. Lanjutkan?')
                 ->modalSubmitActionLabel('Ya, Download Sekarang!')
                 ->action('downloadBackup'),
         ];
     }
 
+    // ============================
+    // RESTORE
+    // ============================
+    public function performRestore(array $data): void
+    {
+        $user       = auth()->user();
+        $filePath   = $data['backup_file'];
+        $mode       = $data['conflict_mode']; // 'skip' | 'overwrite'
+
+        // Read binary content from tmp-restore disk
+        $raw = Storage::disk('local')->get($filePath);
+
+        // Validate SLR magic header: "SLR\x01"
+        if (!$raw || substr($raw, 0, 4) !== "SLR\x01") {
+            Notification::make()
+                ->title('File Tidak Valid')
+                ->body('File yang diunggah bukan file backup Solara yang valid.')
+                ->danger()
+                ->send();
+
+            Storage::disk('local')->delete($filePath);
+            return;
+        }
+
+        // Decrypt
+        $encKey = hash('sha256', config('app.key') . '::' . $user->id, true);
+        $iv         = substr($raw, 4, 16);
+        $ciphertext = substr($raw, 20);
+        $json = openssl_decrypt($ciphertext, 'AES-256-CBC', $encKey, OPENSSL_RAW_DATA, $iv);
+
+        if ($json === false) {
+            Notification::make()
+                ->title('Dekripsi Gagal')
+                ->body('File tidak bisa didekripsi. Pastikan file ini berasal dari akun Anda sendiri.')
+                ->danger()
+                ->send();
+
+            Storage::disk('local')->delete($filePath);
+            return;
+        }
+
+        $backup = json_decode($json, true);
+        if (!isset($backup['data'])) {
+            Notification::make()
+                ->title('Format Tidak Dikenali')
+                ->body('Struktur data backup tidak valid.')
+                ->danger()
+                ->send();
+
+            Storage::disk('local')->delete($filePath);
+            return;
+        }
+
+        $imported = 0;
+        $skipped  = 0;
+        $overwrote = 0;
+
+        DB::transaction(function () use ($user, $backup, $mode, &$imported, &$skipped, &$overwrote) {
+            $d = $backup['data'];
+
+            // Helper closure
+            $restore = function (string $model, array $records, array $matchKeys, array $skipFields = []) use ($user, $mode, &$imported, &$skipped, &$overwrote) {
+                foreach ($records as $record) {
+                    // Always bind to current user
+                    $record['user_id'] = $user->id;
+
+                    // Build match conditions
+                    $match = ['user_id' => $user->id];
+                    foreach ($matchKeys as $key) {
+                        $match[$key] = $record[$key] ?? null;
+                    }
+
+                    // Remove auto-managed fields before upsert
+                    $fill = array_diff_key($record, array_flip(array_merge(['id', 'created_at', 'updated_at'], $skipFields)));
+
+                    $existing = $model::where($match)->first();
+
+                    if ($existing) {
+                        if ($mode === 'overwrite') {
+                            $existing->update($fill);
+                            $overwrote++;
+                        } else {
+                            $skipped++;
+                        }
+                    } else {
+                        $model::create(array_merge($fill, ['created_at' => $record['created_at'] ?? now(), 'updated_at' => $record['updated_at'] ?? now()]));
+                        $imported++;
+                    }
+                }
+            };
+
+            // Tasks: match by title + status + due_date
+            $restore(Task::class, $d['tasks'] ?? [], ['title']);
+
+            // Habits: match by name
+            $restore(Habit::class, $d['habits'] ?? [], ['name'], ['logs']);
+
+            // HabitLogs: match by habit unique key via logged_date
+            foreach ($d['habit_logs'] ?? [] as $log) {
+                $log['user_id'] = $user->id;
+                // Try to find the habit by name from the backup habits list
+                $habitName = collect($d['habits'] ?? [])->firstWhere('id', $log['habit_id'])['name'] ?? null;
+                $habit = $habitName ? Habit::where('user_id', $user->id)->where('name', $habitName)->first() : null;
+
+                if (!$habit) { $skipped++; continue; }
+
+                $fill = ['user_id' => $user->id, 'habit_id' => $habit->id, 'logged_date' => $log['logged_date'], 'completed' => $log['completed'] ?? false, 'count' => $log['count'] ?? 1];
+                $existing = HabitLog::where('user_id', $user->id)->where('habit_id', $habit->id)->where('logged_date', $log['logged_date'])->first();
+
+                if ($existing) {
+                    $mode === 'overwrite' ? ($existing->update($fill) && $overwrote++) : $skipped++;
+                } else {
+                    HabitLog::create($fill);
+                    $imported++;
+                }
+            }
+
+            // Notes: match by title
+            $restore(Note::class, $d['notes'] ?? [], ['title']);
+
+            // Class Schedules: match by subject + day
+            $restore(ClassSchedule::class, $d['class_schedules'] ?? [], ['subject', 'day']);
+
+            // Class Assignments: match by title
+            $restore(ClassAssignment::class, $d['class_assignments'] ?? [], ['title']);
+
+            // Finance Transactions: match by amount + date + type
+            $restore(FinanceTransaction::class, $d['finance_transactions'] ?? [], ['amount', 'date', 'type']);
+
+            // Goals: match by title
+            $restore(Goal::class, $d['goals'] ?? [], ['title'], ['milestones']);
+        });
+
+        // Cleanup temp file
+        Storage::disk('local')->delete($filePath);
+
+        // Refresh stats
+        $this->mount();
+
+        $modeLabel = $mode === 'overwrite' ? 'Timpa aktif' : 'Skip aktif';
+        Notification::make()
+            ->title('Restore Selesai! 🎉')
+            ->body("✅ Diimport: {$imported} | ⏭️ Dilewati: {$skipped} | 🔄 Ditimpa: {$overwrote}\n({$modeLabel})")
+            ->success()
+            ->persistent()
+            ->send();
+    }
+
+    // ============================
+    // DOWNLOAD / BACKUP
+    // ============================
     public function downloadBackup(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
         $user = auth()->user();
@@ -74,64 +257,39 @@ class DataBackupPage extends Page
                 'app'         => 'Solara',
                 'version'     => '1.0',
                 'exported_at' => now()->toIso8601String(),
-                'user'        => [
-                    'name'  => $user->name,
-                    'email' => $user->email,
-                ],
+                'user'        => ['name' => $user->name, 'email' => $user->email],
             ],
             'data' => [
-                'tasks' => Task::where('user_id', $user->id)
-                    ->get()->map(fn ($t) => $t->toArray())->toArray(),
-                'habits' => Habit::where('user_id', $user->id)
-                    ->with('logs')->get()->map(fn ($h) => $h->toArray())->toArray(),
-                'habit_logs' => HabitLog::where('user_id', $user->id)
-                    ->get()->map(fn ($l) => $l->toArray())->toArray(),
-                'notes' => Note::where('user_id', $user->id)
-                    ->get()->map(fn ($n) => $n->toArray())->toArray(),
-                'class_schedules' => ClassSchedule::where('user_id', $user->id)
-                    ->get()->map(fn ($s) => $s->toArray())->toArray(),
-                'class_assignments' => ClassAssignment::where('user_id', $user->id)
-                    ->get()->map(fn ($a) => $a->toArray())->toArray(),
-                'finance_transactions' => FinanceTransaction::where('user_id', $user->id)
-                    ->get()->map(fn ($f) => $f->toArray())->toArray(),
-                'goals' => Goal::where('user_id', $user->id)
-                    ->with('milestones')->get()->map(fn ($g) => $g->toArray())->toArray(),
+                'tasks'                => Task::where('user_id', $user->id)->get()->map(fn ($t) => $t->toArray())->toArray(),
+                'habits'               => Habit::where('user_id', $user->id)->with('logs')->get()->map(fn ($h) => $h->toArray())->toArray(),
+                'habit_logs'           => HabitLog::where('user_id', $user->id)->get()->map(fn ($l) => $l->toArray())->toArray(),
+                'notes'                => Note::where('user_id', $user->id)->get()->map(fn ($n) => $n->toArray())->toArray(),
+                'class_schedules'      => ClassSchedule::where('user_id', $user->id)->get()->map(fn ($s) => $s->toArray())->toArray(),
+                'class_assignments'    => ClassAssignment::where('user_id', $user->id)->get()->map(fn ($a) => $a->toArray())->toArray(),
+                'finance_transactions' => FinanceTransaction::where('user_id', $user->id)->get()->map(fn ($f) => $f->toArray())->toArray(),
+                'goals'                => Goal::where('user_id', $user->id)->with('milestones')->get()->map(fn ($g) => $g->toArray())->toArray(),
             ],
         ];
 
-        // Encrypt with AES-256-CBC
         $encKey    = hash('sha256', config('app.key') . '::' . $user->id, true);
         $iv        = random_bytes(16);
         $json      = json_encode($backup, JSON_UNESCAPED_UNICODE);
         $encrypted = openssl_encrypt($json, 'AES-256-CBC', $encKey, OPENSSL_RAW_DATA, $iv);
         $slrData   = "SLR\x01" . $iv . $encrypted;
 
-        // Log this backup
-        $totalRecords = array_sum(array_column($this->backupStats, null));
-        $settings = $user->settings ?? [];
-        $history  = $settings['backup_history'] ?? [];
-        $history[] = [
-            'created_at'    => now()->toIso8601String(),
-            'filename'      => 'solara-backup-' . now()->format('Y-m-d-His') . '.slr',
-            'size_bytes'    => strlen($slrData),
-            'total_records' => $totalRecords,
-        ];
-        // Keep max 50 entries
+        // Log backup
+        $totalRecords = array_sum($this->backupStats);
+        $settings     = $user->settings ?? [];
+        $history      = $settings['backup_history'] ?? [];
+        $filename     = 'solara-backup-' . now()->format('Y-m-d-His') . '.slr';
+        $history[]    = ['created_at' => now()->toIso8601String(), 'filename' => $filename, 'size_bytes' => strlen($slrData), 'total_records' => $totalRecords];
         $settings['backup_history'] = array_slice($history, -50);
         $user->update(['settings' => $settings]);
 
-        $filename = 'solara-backup-' . now()->format('Y-m-d-His') . '.slr';
-
-        Notification::make()
-            ->title('Backup Berhasil! 🎉')
-            ->body('File backup terenkripsi (.slr) berhasil diunduh.')
-            ->success()
-            ->send();
+        Notification::make()->title('Backup Berhasil! 🎉')->body('File .slr terenkripsi berhasil diunduh.')->success()->send();
 
         return response()->streamDownload(function () use ($slrData) {
             echo $slrData;
-        }, $filename, [
-            'Content-Type' => 'application/octet-stream',
-        ]);
+        }, $filename, ['Content-Type' => 'application/octet-stream']);
     }
 }
