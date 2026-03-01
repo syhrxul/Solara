@@ -138,7 +138,7 @@ class JadwalDashboard extends Page implements HasTable
         $settings['jadwal_location'] = $locationData;
         $user->update(['settings' => $settings]);
 
-        $this->loadPrayerTimes();
+        $this->loadPrayerTimes(true);
         $this->dispatch('location-changed')->to(\App\Filament\Widgets\JadwalOverview::class);
         $this->dispatch('location-changed')->to(\App\Filament\Widgets\WeatherForecastWidget::class);
         $this->dispatch('location-changed')->to(\App\Filament\Widgets\WeatherDetailStatsWidget::class);
@@ -207,15 +207,26 @@ class JadwalDashboard extends Page implements HasTable
         return 3;
     }
 
-    public function loadPrayerTimes()
+    public function loadPrayerTimes($force = false)
     {
         $lat = $this->activeLocation['lat'];
         $lng = $this->activeLocation['lng'];
 
         try {
-            $dateStr = Carbon::now('Asia/Jakarta')->format('d-m-Y');
             $dateSq = Carbon::now('Asia/Jakarta')->toDateString();
-            array_filter([]);  
+            
+            if (!$force) {
+                $exists = HealthMetric::where('user_id', auth()->id())
+                    ->where('type', 'prayer_time')
+                    ->where('date', $dateSq)
+                    ->exists();
+
+                if ($exists) {
+                    return; 
+                }
+            }
+
+            $dateStr = Carbon::now('Asia/Jakarta')->format('d-m-Y');
             
             $response = Http::get("https://api.aladhan.com/v1/timings/$dateStr", [
                 'latitude' => $lat,
@@ -259,10 +270,13 @@ class JadwalDashboard extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
+            ->heading('Jadwal Waktu Sholat')
+            ->description('Jadwal hari ini: ' . Carbon::now('Asia/Jakarta')->translatedFormat('l, d F Y'))
             ->query(
                 HealthMetric::query()
                     ->where('user_id', auth()->id())
                     ->where('type', 'prayer_time')
+                    ->where('date', Carbon::now('Asia/Jakarta')->toDateString())
                     ->orderBy('value', 'asc') // Urutkan berdasarkan ID dari pagi ke malam
             )
             ->columns([
