@@ -58,58 +58,7 @@
                 {{ $this->table }}
             </div>
 
-            <!-- Detail Grid -->
-            <div class="flex flex-nowrap overflow-x-auto md:grid md:grid-cols-4 gap-3 mt-4 hide-scrollbar pb-2">
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 flex flex-col items-start justify-between shadow-sm border border-gray-100 dark:border-gray-700 shrink-0 w-36 md:w-auto">
-                    <div class="flex items-center space-x-1.5 text-primary-600 dark:text-primary-400 mb-1">
-                        @svg('heroicon-o-sun', 'w-4 h-4')
-                        <span class="text-[10px] font-bold uppercase tracking-wider">Indeks UV</span>
-                    </div>
-                    <div>
-                        <p class="text-lg font-semibold dark:text-white">{{ $uvMax }}</p>
-                        <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{{ $uvMax > 5 ? 'Tinggi' : 'Rendah' }}</p>
-                    </div>
-                </div>
 
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 flex flex-col items-start justify-between shadow-sm border border-gray-100 dark:border-gray-700 shrink-0 w-36 md:w-auto">
-                    <div class="flex items-center space-x-1.5 text-success-600 dark:text-success-400 mb-1">
-                        @svg('heroicon-o-clock', 'w-4 h-4')
-                        <span class="text-[10px] font-bold uppercase tracking-wider">Matahari</span>
-                    </div>
-                    <div class="w-full">
-                        <div class="flex justify-between items-end border-b border-gray-200 dark:border-gray-700 pb-0.5 mb-0.5">
-                            <span class="text-[10px] text-gray-500">Terbit</span>
-                            <span class="text-xs font-semibold dark:text-white">{{ $sunrise }}</span>
-                        </div>
-                        <div class="flex justify-between items-end mt-0.5">
-                            <span class="text-[10px] text-gray-500">Terbenam</span>
-                            <span class="text-xs font-semibold dark:text-white">{{ $sunset }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 flex flex-col items-start justify-between shadow-sm border border-gray-100 dark:border-gray-700 shrink-0 w-36 md:w-auto">
-                    <div class="flex items-center space-x-1.5 text-info-600 dark:text-info-400 mb-1">
-                        @svg('heroicon-o-cloud', 'w-4 h-4')
-                        <span class="text-[10px] font-bold uppercase tracking-wider">Kelembapan</span>
-                    </div>
-                    <div>
-                        <p class="text-lg font-semibold dark:text-white">{{ $humidityNow }}%</p>
-                        <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">Titik embun rata-rata</p>
-                    </div>
-                </div>
-
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 flex flex-col items-start justify-between shadow-sm border border-gray-100 dark:border-gray-700 shrink-0 w-36 md:w-auto">
-                    <div class="flex items-center space-x-1.5 text-warning-600 dark:text-warning-400 mb-1">
-                        @svg('heroicon-o-eye', 'w-4 h-4')
-                        <span class="text-[10px] font-bold uppercase tracking-wider">Jarak Pandang</span>
-                    </div>
-                    <div>
-                        <p class="text-lg font-semibold dark:text-white">{{ round($avgVisibility, 1) }} <span class="text-[10px]">km</span></p>
-                        <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">Visibilitas sangat jernih</p>
-                    </div>
-                </div>
-            </div>
 
             <style>
                 .hide-scrollbar::-webkit-scrollbar {

@@ -141,6 +141,7 @@ class JadwalDashboard extends Page implements HasTable
         $this->loadPrayerTimes();
         $this->dispatch('location-changed')->to(\App\Filament\Widgets\JadwalOverview::class);
         $this->dispatch('location-changed')->to(\App\Filament\Widgets\WeatherForecastWidget::class);
+        $this->dispatch('location-changed')->to(\App\Filament\Widgets\WeatherDetailStatsWidget::class);
     }
 
     public function searchAndSetLocation(string $city)
@@ -197,6 +198,7 @@ class JadwalDashboard extends Page implements HasTable
         return [
             \App\Filament\Widgets\JadwalOverview::class,
             \App\Filament\Widgets\WeatherForecastWidget::class,
+            \App\Filament\Widgets\WeatherDetailStatsWidget::class,
         ];
     }
 
@@ -213,7 +215,7 @@ class JadwalDashboard extends Page implements HasTable
         try {
             $dateStr = Carbon::now('Asia/Jakarta')->format('d-m-Y');
             $dateSq = Carbon::now('Asia/Jakarta')->toDateString();
-            array_filter([]); // just doing a quick cleanup if needed, keep structure
+            array_filter([]);  
             
             $response = Http::get("https://api.aladhan.com/v1/timings/$dateStr", [
                 'latitude' => $lat,
