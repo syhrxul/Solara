@@ -41,31 +41,6 @@ class BioHealthAnalytics extends Page implements HasTable
         $this->syncHealthData(30);
     }
 
-    public function getSubheading(): Htmlable|string|null
-    {
-        if ($this->activeTab === 'analytics') {
-            return null;
-        }
-
-        $user = auth()->user();
-        $tokenExp = $user->google_token_expires_at;
-
-        if (!$user->google_access_token) {
-            return new HtmlString("<span class='text-red-500'>❌ Google Fit belum tertaut. Silakan klik 'Perbarui Izin Akses'.</span>");
-        }
-
-        if (!$tokenExp) {
-            return new HtmlString("<span class='text-green-500'>✅ Terhubung ke Google Fit, namun masa aktif token tidak diketahui.</span>");
-        }
-
-        $expiresAt = Carbon::parse($tokenExp);
-        if ($expiresAt->isPast()) {
-            return new HtmlString("<span class='text-warning-500'>⚠️ Token akses sesi terakhirmy habis " . $expiresAt->diffForHumans() . ". Sistem otomatis pakai Refresh Token.</span>");
-        }
-
-        return new HtmlString("<span class='text-green-500'>✅ Google Fit aktif. Token akses sesi habis " . $expiresAt->diffForHumans() . ".</span>");
-    }
-
     protected function getHeaderActions(): array
     {
         $actions = [
@@ -143,10 +118,14 @@ class BioHealthAnalytics extends Page implements HasTable
                 // Get current hour's UV index
                 $currentHour = Carbon::now('Asia/Jakarta')->format('Y-m-d\TH:00');
                 $uvIndex = 0;
-                if (isset($data['hourly']['time']) && isset($data['hourly']['uv_index'])) {
-                    $index = array_search($currentHour, $data['hourly']['time']);
+                
+                $hourlyTime = $data['hourly']['time'] ?? [];
+                $hourlyUv = $data['hourly']['uv_index'] ?? [];
+
+                if (!empty($hourlyTime) && !empty($hourlyUv)) {
+                    $index = array_search($currentHour, $hourlyTime);
                     if ($index !== false) {
-                        $uvIndex = $data['hourly']['uv_index'][$index] ?? 0;
+                        $uvIndex = $hourlyUv[$index] ?? 0;
                     }
                 }
 
@@ -158,42 +137,84 @@ class BioHealthAnalytics extends Page implements HasTable
                     'lng' => $activeLocation['lng'],
                     'humidity' => $data['current']['relative_humidity_2m'] ?? '--',
                     'weather_code' => $data['current']['weather_code'] ?? -1,
+                    'hourly_time' => $hourlyTime,
+                    'hourly_uv' => $hourlyUv,
                 ];
 
-                $statusColor = 'success';
-                $statusIcon = 'heroicon-o-check-circle';
-                $title = "Normal & Terjaga";
-                $message = "Kondisi lingkungan hari ini ideal (Suhu {$temp}°C, UV: {$uvIndex}). Sirkulasi tubuh dan kelembapan kulit dalam kondisi aman sepenuhnya.";
-                $tips = [
-                    "Aman beraktivitas di luar", 
-                    "Jaga hidrasi standar (2L/hari)", 
-                    "Gunakan pelembap wajah ringan"
-                ];
+            } else {
+                throw new \Exception('API Error');
+            }
+        } catch (\Exception $e) {
+            $this->weather = null;
+        }
 
-                if ($temp > 33 || $uvIndex > 7) {
-                    $statusColor = 'danger';
-                    $statusIcon = 'heroicon-o-exclamation-triangle';
-                    $title = "Fase Ekstrem (Waspada)";
-                    $message = "Sakit & dehidrasi mengancam. Index UV ({$uvIndex}) & Suhu ({$temp}°C) melampaui batas wajar. Hindari matahari langsung agar tidak merusak skin-barrier.";
-                    $tips = [
-                        "Wajib Sunscreen SPF 50+ & Reapply", 
-                        "Stop aktivitas outdoor di jam 11-14", 
-                        "Gunakan kacamata UV & Masker", 
-                        "Standby minuman elektrolit dingin"
-                    ];
-                } elseif ($temp > 30 || $uvIndex > 5) {
+        $metrics = HealthMetric::where('user_id', auth()->id())
+            ->where('type', 'sleep')
+            ->orderBy('date', 'desc')
+            ->take(7)
+            ->get();
+
+        $sleepDuration = 0;
+        $wokeUpHourFormatted = '06:00';
+        $avgDuration = 0;
+
+        if ($metrics->isNotEmpty()) {
+            $recentDate = $metrics->first()->date->toDateString();
+            $recentSleep = $metrics->filter(function($m) use ($recentDate) {
+                return $m->date->toDateString() === $recentDate;
+            });
+            $sleepDuration = $recentSleep->sum('value');
+            $avgDuration = $metrics->avg('value');
+
+            // Find recent time bed and wake up
+            $recentTimeBed = $recentSleep->first()->details['time_bed'] ?? '23:00';
+            $recentTimeWakeup = $recentSleep->first()->details['time_wakeup'] ?? '06:00';
+            
+            $wokeUpHourFormatted = $recentTimeWakeup;
+
+            // Check golden hour (23:00 to 02:00)
+            $hBed = (int) explode(':', $recentTimeBed)[0];
+            
+            // Evaluasi jam mulai tidur (Kebiasaan)
+            $strHabit = "Tidur terakhir sekitar jam $recentTimeBed, bangun jam $recentTimeWakeup. ";
+            if ($hBed >= 23 || $hBed < 2) {
+                $strHabit .= "Sangat baik, Anda beristirahat di rentang Golden Hour (23:00 - 02:00), optimal untuk regenerasi sel otak dan hormon tubuh.";
+            } elseif ($hBed >= 2 && $hBed < 6) {
+                $strHabit .= "Anda melewatkan Golden Hour (tidur di atas jam 2 pagi). Ritme sirkadian Anda mungkin tertanggu.";
+            } elseif ($hBed < 23 && $hBed > 18) {
+                $strHabit .= "Anda tidur cukup awal hari ini, waktu yang sangat bagus untuk pemulihan jangka panjang.";
+            }
+
+            if ($sleepDuration > 0 && $this->weather) {
+                $statusColor = 'info';
+                $statusIcon = 'heroicon-o-check-badge';
+                $title = "Analisis Tidur & Golden Hour";
+                $message = "Total tidur terakhir: " . round($sleepDuration, 1) . " jam rata-rata seminggu ini " . round($avgDuration, 1) . " jam. {$strHabit}";
+                
+                $tips = [];
+
+                if ($sleepDuration < 6) {
                     $statusColor = 'warning';
-                    $statusIcon = 'heroicon-o-fire';
-                    $title = "Cukup Terik";
-                    $message = "Potensi kusam dan dehidrasi ringan karena paparan panas medium ke tinggi ({$temp}°C, UV: {$uvIndex}).";
-                    $tips = [
-                        "Minimal Sunscreen SPF 30+", 
-                        "Bawa botol minum cadangan",
-                        "Hindari pakaian warna gelap (menyerap panas)"
-                    ];
+                    $statusIcon = 'heroicon-o-battery-50';
+                    $title = "Defisit Waktu Tidur";
+                    $message .= " Kekurangan jam tidur dapat menyebabkan brain-fog dan kelelahan instan hari ini.";
+                    
+                    $tips[] = "Lakukan 'Power Nap' di siang hari (10-20 menit) untuk memompa kewaspadaan.";
+                    $tips[] = "Redupkan layar dan hindari kafein 4-6 jam sebelum waktu tidur berikutnya agar Anda bisa tidur lebih cepat (jam 22:00).";
+                    $tips[] = "Gunakan teknik relaksasi / meditasi 10 menit sebelum tidur agar bisa langsung tertidur pulas.";
+                } elseif ($sleepDuration >= 7) {
+                     $statusColor = 'success';
+                     $statusIcon = 'heroicon-o-battery-100';
+                     $title = "Kondisi Fisik Prima";
+                     $message .= " Jumlah jam tidur Anda mencukupi fase Deep Sleep.";
+                     $tips[] = "Hari ini ideal untuk Deep Work / pekerjaan berat yang butuh konsentrasi tinggi.";
+                     $tips[] = "Coba terus pertahankan jam tidur di bawah 11 malam (Golden Hour) untuk rutinitas stabil.";
+                } else {
+                     $tips[] = "Durasi tidur lumayan, namun usahakan sentuh 7-8 jam.";
+                     $tips[] = "Cobalah mematikan perangkat elektronik minimal 30 menit sebelum tidur untuk mempercepat ngantuk.";
                 }
 
-                $this->skinWarning = [
+                $this->sleepCorrelation = [
                     'color' => $statusColor,
                     'icon' => $statusIcon,
                     'title' => $title,
@@ -201,104 +222,106 @@ class BioHealthAnalytics extends Page implements HasTable
                     'tips' => $tips,
                 ];
             } else {
-                throw new \Exception('API Error');
+                $this->sleepCorrelation = [
+                    'color' => 'gray',
+                    'icon' => 'heroicon-o-information-circle',
+                    'title' => 'Data Tidur Kurang',
+                    'message' => 'Tarik data terbaru dari Google Fit.',
+                    'tips' => ['Sinkronkan data melalui Log Tidur'],
+                ];
             }
-        } catch (\Exception $e) {
-            $this->weather = null;
-            $this->skinWarning = [
-                'color' => 'gray',
-                'icon' => 'heroicon-o-x-circle',
-                'title' => 'Gagal Mengambil Data',
-                'message' => 'Data cuaca gagal ditarik dari server Open-Meteo.',
-                'tips' => ['Cek koneksi internet'],
-            ];
-        }
-
-        // Correlation with Sleep Data
-        $metrics = HealthMetric::where('user_id', auth()->id())
-            ->where('type', 'sleep')
-            ->orderBy('date', 'desc')
-            ->take(5)
-            ->get();
-
-        $sleepDuration = 0;
-        
-        if ($metrics->isNotEmpty()) {
-            $recentDate = $metrics->first()->date->toDateString();
-            $recentSleep = $metrics->filter(function($m) use ($recentDate) {
-                return $m->date->toDateString() === $recentDate;
-            });
-            $sleepDuration = $recentSleep->sum('value');
-        }
-        
-        if ($sleepDuration > 0 && $this->weather) {
-            $statusColor = 'info';
-            $statusIcon = 'heroicon-o-check-badge';
-            $title = "Siap Tempur";
-            $message = "Durasi " . round($sleepDuration, 1) . " jam sudah cukup meregenerasi sel otak. Kapasitas analisa kognitif dan ketahanan fisik Anda hari ini di angka yang solid.";
-            $tips = [
-                "Jadwalkan pekerjaan tersulit (Deep Work) di pagi hari", 
-                "Olahraga ringan untuk memompa detak jantung",
-                "Pertahankan konsistensi jam tidur malam ini"
-            ];
-
-            if ($sleepDuration < 6) {
-                $statusColor = 'warning';
-                $statusIcon = 'heroicon-o-battery-50';
-                $title = "Performa Turun Ekstrem";
-                $message = "Defisit pemulihan akibat tidur hanya " . round($sleepDuration, 1) . " jam. Anda berisiko kehilangan fokus instan, brain-fog (otak buntu), dan mudah merasa kelelahan (fatigue).";
-                
-                if (isset($this->weather['temperature']) && $this->weather['temperature'] > 30) {
-                    $message .= " Suhu panas hari ini mempercepat tingkat dehidrasi dan stress tubuh akibat kelelahan.";
-                    $tips = [
-                        "Dilarang olahraga kardio siang ini", 
-                        "Power Nap (Tidur Siang) WAJIB max 20 menit", 
-                        "Stop Kafein setelah jam 2 siang",
-                        "Minum elektrolit ekstra untuk saraf otak"
-                    ];
-                } else {
-                    $message .= " Antisipasi 'sugar-crash' atau rasa ngantuk akut pada pertengahan hari.";
-                    $tips = [
-                        "Doping kopi / teh hangat sebelum mulai kerja", 
-                        "Push tugas paling penting sekarang juga", 
-                        "Selang jeda istirahat mata setiap 45 menit"
-                    ];
-                }
-            } elseif ($sleepDuration >= 7) {
-                 $statusColor = 'success';
-                 $statusIcon = 'heroicon-o-battery-100';
-                 $title = "Puncak Stamina (100%)";
-                 $message = "Kualitas Deep Sleep luar biasa (" . round($sleepDuration, 1) . " jam). Imun tubuh sedang ter-buff, regenerasi sel maksimal, dan otak memproses memori secara sempurna.";
-                 if (isset($this->weather['temperature']) && $this->weather['temperature'] <= 30) {
-                     $message .= " Cuaca mendukung daya tahan konsentrasi lama.";
-                     $tips = [
-                         "Cocok untuk olahraga intensif (Gym/Lari)", 
-                         "Lakukan problem-solving arsitektur sulit", 
-                         "Otomatisasi rutinitas harianmu"
-                     ];
-                 } else {
-                     $tips = [
-                         "Fokus pada pekerjaan konseptual berat", 
-                         "Bantah cuaca terik dengan tetap di AC", 
-                         "Amankan to-do list terpenting hari ini"
-                     ];
-                 }
-            }
-
-            $this->sleepCorrelation = [
-                'color' => $statusColor,
-                'icon' => $statusIcon,
-                'title' => $title,
-                'message' => $message,
-                'tips' => $tips,
-            ];
         } else {
             $this->sleepCorrelation = [
                 'color' => 'gray',
                 'icon' => 'heroicon-o-information-circle',
-                'title' => 'Data Kurang',
-                'message' => 'Tidak dapat menemukan data tidur yang memadai.',
-                'tips' => ['Tarik data terbaru dari Google Fit di menu Log Waktu Tidur'],
+                'title' => 'Data Tidur Kosong',
+                'message' => 'Belum ada histori tidur.',
+                'tips' => ['Tarik dari Data Google Fit'],
+            ];
+        }
+
+        // 3. Sunbathing & Env Logic (Combine Weather and Wake up time)
+        if ($this->weather) {
+            $temp = $this->weather['temperature'];
+            $uvIndex = $this->weather['uv_index'];
+            
+            $statusColorEnv = 'success';
+            $statusIconEnv = 'heroicon-o-sun';
+            $titleEnv = "Panduan Kulit & Jemur";
+            $messageEnv = "Kondisi lingkungan saat ini bersuhu {$temp}°C (UV Index: {$uvIndex}). ";
+            $tipsEnv = [];
+
+            // Rekomendasi Jam Berjemur
+            $bestSunbathingTimes = [];
+            $hourlyT = $this->weather['hourly_time'] ?? [];
+            $hourlyU = $this->weather['hourly_uv'] ?? [];
+
+            if (!empty($hourlyT)) {
+                $todayDateStr = Carbon::now('Asia/Jakarta')->toDateString();
+                foreach ($hourlyT as $idx => $t) {
+                    if (str_starts_with($t, $todayDateStr)) {
+                        $uvAtTime = $hourlyU[$idx] ?? 0;
+                        if ($uvAtTime >= 2 && $uvAtTime <= 5) {
+                            $timeOnly = Carbon::parse($t)->format('H:i');
+                            
+                            $wH = (int)explode(':', $wokeUpHourFormatted)[0];
+                            $wM = (int)explode(':', $wokeUpHourFormatted)[1];
+                            $wokeUpMinutes = ($wH * 60) + $wM;
+                            
+                            $tH = (int)Carbon::parse($t)->format('H');
+                            $tM = (int)Carbon::parse($t)->format('i');
+                            $tMinutes = ($tH * 60) + $tM;
+
+                            // Bisa berjemur setelah bangun tidur
+                            if ($tMinutes >= $wokeUpMinutes) {
+                                $bestSunbathingTimes[] = $timeOnly;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!empty($bestSunbathingTimes)) {
+                $startJemur = $bestSunbathingTimes[0];
+                $endJemur = end($bestSunbathingTimes);
+                $messageEnv .= " Dilihat dari rutinitas bangun Anda ({$wokeUpHourFormatted}), **waktu berjemur terbaik (Sintesis Vitamin D)** hari ini antara jam **{$startJemur} s/d " . Carbon::parse($endJemur)->addHour()->format('H:i') . "**. ";
+                $tipsEnv[] = "Berjemurlah asik sekitar 10-15 menit di periode tersebut tanpa sunscreen agar hormon dan mood di pagi hari membaik.";
+            } else {
+                 $messageEnv .= " Saat ini tidak ada jendela ideal UV aman untuk kulit atau jendela sudah terlewat.";
+            }
+
+            // Extreme weather warnings
+            if ($temp > 33 || $uvIndex > 7) {
+                $statusColorEnv = 'danger';
+                $statusIconEnv = 'heroicon-o-exclamation-triangle';
+                $titleEnv = "Fase Ekstrem (Waspada UV/Suhu)";
+                $tipsEnv[] = "Wajib Sunscreen SPF 50+ & Reapply tiap 2 jam, karena UV eksterm dapat merusak skin barrier.";
+                $tipsEnv[] = "Stop aktivitas outdoor langsung jam 11-14. Berteduhlah.";
+                $tipsEnv[] = "Banyak minum air elektrolit karena resiko dehidrasi di suhu {$temp}°C sungguh tinggi.";
+            } elseif ($temp > 30 || $uvIndex > 5) {
+                $statusColorEnv = 'warning';
+                $statusIconEnv = 'heroicon-o-fire';
+                $titleEnv = "Cukup Terik";
+                $tipsEnv[] = "Minimal Sunscreen SPF 30+ agar kulit tidak kusam.";
+                $tipsEnv[] = "Perhatikan stok minuman karena tubuh lebih cepat kehausan.";
+            } else {
+                 $tipsEnv[] = "Suhu dan cuaca tidak terlalu terik. Aman buat beraktivitas normal.";
+            }
+
+            $this->skinWarning = [
+                'color' => $statusColorEnv,
+                'icon' => $statusIconEnv,
+                'title' => $titleEnv,
+                'message' => $messageEnv,
+                'tips' => $tipsEnv,
+            ];
+        } else {
+            $this->skinWarning = [
+                'color' => 'gray',
+                'icon' => 'heroicon-o-x-circle',
+                'title' => 'Gagal Memuat Cuaca',
+                'message' => 'API Open-Meteo sedang offline atau tidak ada sinyal internet.',
+                'tips' => ['Cek konektivitas Anda.'],
             ];
         }
     }
