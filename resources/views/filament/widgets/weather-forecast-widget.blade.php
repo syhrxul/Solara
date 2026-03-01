@@ -67,26 +67,26 @@
 
         <x-filament::section class="overflow-hidden">
             <!-- Jumbotron Cuaca -->
-            <div class="relative rounded-2xl p-6 text-white overflow-hidden shadow-sm bg-gradient-to-br {{ $isGlobalNight ? 'from-slate-800 to-slate-900' : 'from-blue-500 to-sky-400' }}">
+            <div class="relative rounded-xl p-5 text-white overflow-hidden shadow-sm bg-gradient-to-br {{ $isGlobalNight ? 'from-slate-800 to-slate-900' : 'from-blue-500 to-sky-400' }}">
                 <div class="relative z-10 flex flex-col items-center justify-center text-center">
-                    <h2 class="text-3xl font-light tracking-wide">{{ $locationName }}</h2>
-                    <p class="text-6xl font-semibold mt-4 mb-2 drop-shadow-md">{{ round($tempNow) }}°</p>
-                    <p class="text-xl font-medium tracking-wide drop-shadow">{{ $currentDesc }}</p>
-                    <div class="flex items-center space-x-4 mt-1 opacity-90 text-sm">
+                    <h2 class="text-xl font-medium tracking-wide">{{ $locationName }}</h2>
+                    <p class="text-5xl font-semibold mt-2 mb-1 drop-shadow-md">{{ round($tempNow) }}°</p>
+                    <p class="text-sm font-medium tracking-wide drop-shadow">{{ $currentDesc }}</p>
+                    <div class="flex items-center space-x-3 mt-1 opacity-90 text-xs">
                         <span>H: {{ max(array_column($next24Hours, 'temp')) }}°</span>
                         <span>L: {{ min(array_column($next24Hours, 'temp')) }}°</span>
                     </div>
                 </div>
 
                 <!-- 24 Hours Forecast Slider -->
-                <div class="relative z-10 mt-8 pt-6 border-t border-white/20">
-                    <p class="text-sm font-medium mb-4 opacity-90">Prakiraan 24 Jam Kedepan</p>
-                    <div class="flex overflow-x-auto space-x-6 pb-2 hide-scrollbar">
+                <div class="relative z-10 mt-6 pt-4 border-t border-white/20">
+                    <p class="text-xs font-medium mb-3 opacity-90">Prakiraan 24 Jam</p>
+                    <div class="flex flex-nowrap overflow-x-auto space-x-5 pb-2 hide-scrollbar">
                         @foreach($next24Hours as $idx => $hourData)
-                            <div class="flex flex-col items-center justify-center min-w-[50px] space-y-3">
-                                <span class="text-xs font-medium opacity-90">{{ $hourData['time_label'] }}</span>
-                                @svg($hourData['icon'], 'w-7 h-7 ' . ($hourData['icon'] == 'heroicon-s-sun' ? 'text-yellow-300' : ($hourData['icon'] == 'heroicon-s-moon' ? 'text-slate-200' : 'text-white')))
-                                <span class="text-sm font-semibold">{{ $hourData['temp'] }}°</span>
+                            <div class="flex flex-col items-center justify-center shrink-0 min-w-[40px] space-y-2">
+                                <span class="text-[10px] font-medium opacity-90">{{ $hourData['time_label'] }}</span>
+                                @svg($hourData['icon'], 'w-5 h-5 ' . ($hourData['icon'] == 'heroicon-s-sun' ? 'text-yellow-300' : ($hourData['icon'] == 'heroicon-s-moon' ? 'text-slate-200' : 'text-white')))
+                                <span class="text-xs font-semibold">{{ $hourData['temp'] }}°</span>
                             </div>
                         @endforeach
                     </div>
@@ -94,54 +94,54 @@
             </div>
 
             <!-- Detail Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 flex flex-col items-start justify-between shadow-sm border border-gray-100 dark:border-gray-700">
-                    <div class="flex items-center space-x-2 text-primary-600 dark:text-primary-400 mb-2">
-                        @svg('heroicon-o-sun', 'w-5 h-5')
-                        <span class="text-xs font-bold uppercase tracking-wider">Indeks UV</span>
+            <div class="flex flex-nowrap overflow-x-auto md:grid md:grid-cols-4 gap-3 mt-3 hide-scrollbar pb-2">
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 flex flex-col items-start justify-between shadow-sm border border-gray-100 dark:border-gray-700 shrink-0 w-36 md:w-auto">
+                    <div class="flex items-center space-x-1.5 text-primary-600 dark:text-primary-400 mb-1">
+                        @svg('heroicon-o-sun', 'w-4 h-4')
+                        <span class="text-[10px] font-bold uppercase tracking-wider">Indeks UV</span>
                     </div>
                     <div>
-                        <p class="text-2xl font-semibold dark:text-white">{{ $uvMax }}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $uvMax > 5 ? 'Tinggi' : 'Rendah' }} hari ini.</p>
+                        <p class="text-lg font-semibold dark:text-white">{{ $uvMax }}</p>
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{{ $uvMax > 5 ? 'Tinggi' : 'Rendah' }}</p>
                     </div>
                 </div>
 
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 flex flex-col items-start justify-between shadow-sm border border-gray-100 dark:border-gray-700">
-                    <div class="flex items-center space-x-2 text-success-600 dark:text-success-400 mb-2">
-                        @svg('heroicon-o-clock', 'w-5 h-5')
-                        <span class="text-xs font-bold uppercase tracking-wider">Matahari</span>
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 flex flex-col items-start justify-between shadow-sm border border-gray-100 dark:border-gray-700 shrink-0 w-36 md:w-auto">
+                    <div class="flex items-center space-x-1.5 text-success-600 dark:text-success-400 mb-1">
+                        @svg('heroicon-o-clock', 'w-4 h-4')
+                        <span class="text-[10px] font-bold uppercase tracking-wider">Matahari</span>
                     </div>
                     <div class="w-full">
-                        <div class="flex justify-between items-end border-b border-gray-200 dark:border-gray-700 pb-1 mb-1">
-                            <span class="text-xs text-gray-500">Terbit</span>
-                            <span class="text-sm font-semibold dark:text-white">{{ $sunrise }}</span>
+                        <div class="flex justify-between items-end border-b border-gray-200 dark:border-gray-700 pb-0.5 mb-0.5">
+                            <span class="text-[10px] text-gray-500">Terbit</span>
+                            <span class="text-xs font-semibold dark:text-white">{{ $sunrise }}</span>
                         </div>
-                        <div class="flex justify-between items-end mt-1">
-                            <span class="text-xs text-gray-500">Terbenam</span>
-                            <span class="text-sm font-semibold dark:text-white">{{ $sunset }}</span>
+                        <div class="flex justify-between items-end mt-0.5">
+                            <span class="text-[10px] text-gray-500">Terbenam</span>
+                            <span class="text-xs font-semibold dark:text-white">{{ $sunset }}</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 flex flex-col items-start justify-between shadow-sm border border-gray-100 dark:border-gray-700">
-                    <div class="flex items-center space-x-2 text-info-600 dark:text-info-400 mb-2">
-                        @svg('heroicon-o-cloud', 'w-5 h-5')
-                        <span class="text-xs font-bold uppercase tracking-wider">Kelembapan</span>
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 flex flex-col items-start justify-between shadow-sm border border-gray-100 dark:border-gray-700 shrink-0 w-36 md:w-auto">
+                    <div class="flex items-center space-x-1.5 text-info-600 dark:text-info-400 mb-1">
+                        @svg('heroicon-o-cloud', 'w-4 h-4')
+                        <span class="text-[10px] font-bold uppercase tracking-wider">Kelembapan</span>
                     </div>
                     <div>
-                        <p class="text-2xl font-semibold dark:text-white">{{ $humidityNow }}%</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Titik embun rata-rata.</p>
+                        <p class="text-lg font-semibold dark:text-white">{{ $humidityNow }}%</p>
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">Titik embun rata-rata</p>
                     </div>
                 </div>
 
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 flex flex-col items-start justify-between shadow-sm border border-gray-100 dark:border-gray-700">
-                    <div class="flex items-center space-x-2 text-warning-600 dark:text-warning-400 mb-2">
-                        @svg('heroicon-o-eye', 'w-5 h-5')
-                        <span class="text-xs font-bold uppercase tracking-wider">Jarak Pandang</span>
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 flex flex-col items-start justify-between shadow-sm border border-gray-100 dark:border-gray-700 shrink-0 w-36 md:w-auto">
+                    <div class="flex items-center space-x-1.5 text-warning-600 dark:text-warning-400 mb-1">
+                        @svg('heroicon-o-eye', 'w-4 h-4')
+                        <span class="text-[10px] font-bold uppercase tracking-wider">Jarak Pandang</span>
                     </div>
                     <div>
-                        <p class="text-2xl font-semibold dark:text-white">{{ round($avgVisibility, 1) }} <span class="text-sm">km</span></p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Visibilitas sangat jernih.</p>
+                        <p class="text-lg font-semibold dark:text-white">{{ round($avgVisibility, 1) }} <span class="text-[10px]">km</span></p>
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">Visibilitas sangat jernih</p>
                     </div>
                 </div>
             </div>
