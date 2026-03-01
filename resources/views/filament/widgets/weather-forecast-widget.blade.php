@@ -41,11 +41,13 @@
                 $time = \Carbon\Carbon::parse($hourlyTimes[$i]);
                 $hCode = $weather['hourly']['weather_code'][$i] ?? 0;
                 $isNight = $time->hour < 6 || $time->hour > 17;
+                $precipProb = $weather['hourly']['precipitation_probability'][$i] ?? 0;
                 $next24Hours[] = [
-                    'time_label' => $i === $currentIndex ? 'Sekarang' : $time->format('H:i'),
+                    'time_label' => $i === $currentIndex ? 'Sekrng' : strtoupper($time->format('g A')),
                     'hour' => $time->hour,
                     'temp' => round($weather['hourly']['temperature_2m'][$i] ?? 0),
                     'icon' => $getWeatherIcon($hCode, $isNight),
+                    'precip_prob' => $precipProb,
                     'uv'   => $weather['hourly']['uv_index'][$i] ?? 0,
                     'is_night' => $isNight
                 ];
@@ -80,13 +82,23 @@
 
                 <!-- 24 Hours Forecast Slider -->
                 <div class="relative z-10 mt-6 pt-4 border-t border-white/20">
-                    <p class="text-xs font-medium mb-3 opacity-90">Prakiraan 24 Jam</p>
+                    <p class="text-xs font-semibold mb-3 opacity-90">Prakiraan 24 Jam</p>
                     <div class="flex flex-nowrap overflow-x-auto space-x-5 pb-2 hide-scrollbar">
                         @foreach($next24Hours as $idx => $hourData)
-                            <div class="flex flex-col items-center justify-center shrink-0 min-w-[40px] space-y-2">
-                                <span class="text-[10px] font-medium opacity-90">{{ $hourData['time_label'] }}</span>
-                                @svg($hourData['icon'], 'w-5 h-5 ' . ($hourData['icon'] == 'heroicon-s-sun' ? 'text-yellow-300' : ($hourData['icon'] == 'heroicon-s-moon' ? 'text-slate-200' : 'text-white')))
-                                <span class="text-xs font-semibold">{{ $hourData['temp'] }}°</span>
+                            <div class="flex flex-col items-center justify-start shrink-0 min-w-[38px]">
+                                <span class="text-[11px] font-bold tracking-wide mb-2">{{ $hourData['time_label'] }}</span>
+                                
+                                <div class="h-6 flex items-center justify-center">
+                                    @svg($hourData['icon'], 'w-5 h-5 ' . ($hourData['icon'] == 'heroicon-s-sun' ? 'text-yellow-300' : ($hourData['icon'] == 'heroicon-s-moon' ? 'text-slate-200' : 'text-white')))
+                                </div>
+                                
+                                <div class="h-3 mt-1 flex items-center justify-center">
+                                    @if($hourData['precip_prob'] > 0)
+                                        <span class="text-[10px] font-bold text-sky-200">{{ $hourData['precip_prob'] }}%</span>
+                                    @endif
+                                </div>
+
+                                <span class="text-xs font-bold mt-1.5">{{ $hourData['temp'] }}°</span>
                             </div>
                         @endforeach
                     </div>

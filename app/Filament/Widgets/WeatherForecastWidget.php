@@ -40,7 +40,7 @@ class WeatherForecastWidget extends Widget
                 'latitude' => $activeLocation['lat'],
                 'longitude' => $activeLocation['lng'],
                 'current' => 'temperature_2m,weather_code,relative_humidity_2m',
-                'hourly' => 'temperature_2m,relative_humidity_2m,weather_code,uv_index,visibility',
+                'hourly' => 'temperature_2m,relative_humidity_2m,weather_code,uv_index,visibility,precipitation_probability',
                 'daily' => 'sunrise,sunset',
                 'timezone' => 'Asia/Jakarta',
                 'past_hours' => 0,
