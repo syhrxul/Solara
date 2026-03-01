@@ -99,9 +99,6 @@ class DataBackupPage extends Page
         ];
     }
 
-    // ============================
-    // RESTORE
-    // ============================
     public function performRestore(array $data): void
     {
         $user       = auth()->user();
@@ -205,11 +202,29 @@ class DataBackupPage extends Page
 
                 if (!$habit) { $skipped++; continue; }
 
-                $fill = ['user_id' => $user->id, 'habit_id' => $habit->id, 'logged_date' => $log['logged_date'], 'completed' => $log['completed'] ?? false, 'count' => $log['count'] ?? 1];
-                $existing = HabitLog::where('user_id', $user->id)->where('habit_id', $habit->id)->where('logged_date', $log['logged_date'])->first();
+                // Normalize logged_date to plain Y-m-d (DATE column) to avoid ISO datetime mismatch
+                $loggedDate = \Carbon\Carbon::parse($log['logged_date'])->toDateString();
+
+                $fill = [
+                    'user_id'     => $user->id,
+                    'habit_id'    => $habit->id,
+                    'logged_date' => $loggedDate,
+                    'completed'   => $log['completed'] ?? false,
+                    'count'       => $log['count'] ?? 1,
+                ];
+
+                $existing = HabitLog::where('user_id', $user->id)
+                    ->where('habit_id', $habit->id)
+                    ->whereDate('logged_date', $loggedDate)
+                    ->first();
 
                 if ($existing) {
-                    $mode === 'overwrite' ? ($existing->update($fill) && $overwrote++) : $skipped++;
+                    if ($mode === 'overwrite') {
+                        $existing->update($fill);
+                        $overwrote++;
+                    } else {
+                        $skipped++;
+                    }
                 } else {
                     HabitLog::create($fill);
                     $imported++;
