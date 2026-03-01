@@ -78,7 +78,7 @@ class WeatherDetailStatsWidget extends BaseWidget
         $humidityNow = $weather['current']['relative_humidity_2m'] ?? '--';
         $uvMax = max(array_slice($weather['hourly']['uv_index'] ?? [0], $currentIndex, 24));
         $visibilityData = array_slice($weather['hourly']['visibility'] ?? [0], $currentIndex, 24);
-        $avgVisibility = count($visibilityData) ? (array_sum($visibilityData) / count($visibilityData)) / 1000 : 0; // in km
+        $avgVisibility = count($visibilityData) ? (array_sum($visibilityData) / count($visibilityData)) / 1000 : 0; 
 
         $sunriseStr = $weather['daily']['sunrise'][0] ?? null;
         $sunsetStr = $weather['daily']['sunset'][0] ?? null;

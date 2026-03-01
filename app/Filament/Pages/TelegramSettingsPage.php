@@ -47,7 +47,7 @@ class TelegramSettingsPage extends Page
                         TextInput::make('telegram_chat_id')
                             ->label('Chat ID Telegram')
                             ->placeholder('Contoh: 123456789')
-                            ->helperText('Kirim pesan /start ke bot @SolaraNotifBot, lalu kirim /id untuk mendapatkan Chat ID Anda.')
+                            ->helperText('Kirim pesan /start ke bot @userinfobot lalu salin id untuk mendapatkan Chat ID Anda.')
                             ->maxLength(50),
                     ]),
 
