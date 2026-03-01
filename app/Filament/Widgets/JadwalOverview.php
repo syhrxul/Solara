@@ -105,7 +105,7 @@ class JadwalOverview extends BaseWidget
                 ->description(Carbon::now('Asia/Jakarta')->translatedFormat('l, d F Y'))
                 ->color('success'),
             Stat::make('Wilayah Pantauan', "Lokasi: {$cityName}")
-                ->description("Sumber: BMKG / OpenMeteo")
+                ->description("Sumber: OpenMeteo / Aladhan")
                 ->color('warning'),
         ];
     }
