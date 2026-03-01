@@ -101,18 +101,37 @@ class DataBackupPage extends Page
 
     public function performRestore(array $data): void
     {
-        $user       = auth()->user();
-        $filePath   = $data['backup_file'];
-        $mode       = $data['conflict_mode']; // 'skip' | 'overwrite'
+        $user = auth()->user();
+        $mode = $data['conflict_mode']; // 'skip' | 'overwrite'
 
-        // Read binary content from tmp-restore disk
-        $raw = Storage::disk('local')->get($filePath);
+        // FileUpload may return array or string depending on Filament version
+        $filePath = is_array($data['backup_file']) ? array_values($data['backup_file'])[0] : $data['backup_file'];
+
+        // Read binary content — try the raw path first, then with tmp-restore prefix
+        $raw = Storage::disk('local')->get($filePath)
+            ?? Storage::disk('local')->get('tmp-restore/' . basename($filePath));
+
+        // Also try system temp dir as a last resort (Livewire temp uploads)
+        if (!$raw && file_exists(sys_get_temp_dir() . '/' . basename($filePath))) {
+            $raw = file_get_contents(sys_get_temp_dir() . '/' . basename($filePath));
+        }
+
+        if (!$raw) {
+            Notification::make()
+                ->title('File Tidak Bisa Dibaca')
+                ->body('File tidak dapat dibaca dari server. Coba upload ulang.')
+                ->danger()
+                ->send();
+            return;
+        }
 
         // Validate SLR magic header: "SLR\x01"
-        if (!$raw || substr($raw, 0, 4) !== "SLR\x01") {
+        if (substr($raw, 0, 4) !== "SLR\x01") {
+            // Show first 10 bytes hex for debugging
+            $hexHeader = bin2hex(substr($raw, 0, 10));
             Notification::make()
                 ->title('File Tidak Valid')
-                ->body('File yang diunggah bukan file backup Solara yang valid.')
+                ->body("File yang diunggah bukan file backup Solara (.slr) yang valid. Header: {$hexHeader}")
                 ->danger()
                 ->send();
 
