@@ -225,14 +225,14 @@ class BioHealthAnalytics extends Page implements HasTable
             $statusIcon = 'heroicon-o-check-badge';
             $title = "Analisis Tidur Mingguan (Score: {$sleepScore}/100)";
 
-            $message = "Berdasarkan rutinitas {$totalSleepDays} hari terakhir, sistem menyimpulkan kualitas tidur Anda berada di tingkat **";
+            $message = "Berdasarkan rutinitas {$totalSleepDays} hari terakhir, sistem menyimpulkan kualitas tidur Anda berada di tingkat <strong>";
             
             $tips = [];
 
             if ($sleepScore >= 85) {
                 $statusColor = 'success';
                 $statusIcon = 'heroicon-o-star';
-                $message .= "Sangat Baik (Excellent)**.";
+                $message .= "Sangat Baik (Excellent)</strong>.";
                 $message .= " Rata-rata tidur " . round($avgDuration, 1) . " jam/hari dan ritme bangun Anda sangat konsisten. Golden hour tercapai dengan mantap.";
                 
                 $tips[] = "Pertahankan ritme ini karena sangat bagus untuk fokus harianmu.";
@@ -240,7 +240,7 @@ class BioHealthAnalytics extends Page implements HasTable
             } elseif ($sleepScore >= 65) {
                 $statusColor = 'info';
                 $statusIcon = 'heroicon-o-hand-thumb-up';
-                $message .= "Cukup Baik (Fair)**.";
+                $message .= "Cukup Baik (Fair)</strong>.";
                 $message .= " Rata-rata tidur " . round($avgDuration, 1) . " jam/hari. Pola tidur sudah lumayan, tapi ada beberapa malam di atas jam 2 pagi atau jadwal bangun beda jauh.";
 
                 $tips[] = "Supaya makin bugar besok harinya, coba usahakan tidur sebelum jam 23:00.";
@@ -248,7 +248,7 @@ class BioHealthAnalytics extends Page implements HasTable
             } elseif ($sleepScore >= 40) {
                 $statusColor = 'warning';
                 $statusIcon = 'heroicon-o-exclamation-triangle';
-                $message .= "Kurang (Poor)**.";
+                $message .= "Kurang (Poor)</strong>.";
                 $message .= " Rata-rata " . round($avgDuration, 1) . " jam/hari. Polamu sedang sedikit berantakan belakangan ini, mulai sering begadang di luar area Golden Hour.";
 
                 $tips[] = "Minimalisir main gadget 1 jam sebelum target tidurmu ya.";
@@ -256,7 +256,7 @@ class BioHealthAnalytics extends Page implements HasTable
             } else {
                 $statusColor = 'danger';
                 $statusIcon = 'heroicon-o-shield-exclamation';
-                $message .= "Sangat Kurang (Critical)**.";
+                $message .= "Sangat Kurang (Critical)</strong>.";
                 $message .= " Rata-rata tidur cuma " . round($avgDuration, 1) . " jam/hari dan jarak jam bangunnya kurang konsisten. Badan pasti berasa lumayan capek nih buat jalanin hari.";
 
                 $tips[] = "Coba malam ini tidur lebih awal yuk untuk bayar hutang tidurmu yang numpuk.";
@@ -264,7 +264,7 @@ class BioHealthAnalytics extends Page implements HasTable
             }
 
             // Tambahkan insight kebiasaan terakhir
-            $strHabit = " *Catatan Ekstra: Semalam tidur jam {$recentTimeBed}, bangun {$recentTimeWakeup}.*";
+            $strHabit = "<br><em class='text-xs opacity-70 mt-2 block'>Catatan Ekstra: Semalam tidur jam {$recentTimeBed}, bangun {$recentTimeWakeup}.</em>";
             $message .= $strHabit;
 
             $this->sleepCorrelation = [
@@ -317,8 +317,9 @@ class BioHealthAnalytics extends Page implements HasTable
                             $tM = (int)Carbon::parse($t)->format('i');
                             $tMinutes = ($tH * 60) + $tM;
 
-                            // Bisa berjemur setelah bangun tidur
-                            if ($tMinutes >= $wokeUpMinutes) {
+                            // Bisa berjemur setelah bangun tidur dan batasi hanya sebelum jam 10 pagi 
+                            // agar tidak gosong/hitam (fokus ke morning sun).
+                            if ($tMinutes >= $wokeUpMinutes && $tH <= 10) {
                                 $bestSunbathingTimes[] = $timeOnly;
                             }
                         }
@@ -329,10 +330,10 @@ class BioHealthAnalytics extends Page implements HasTable
             if (!empty($bestSunbathingTimes)) {
                 $startJemur = $bestSunbathingTimes[0];
                 $endJemur = end($bestSunbathingTimes);
-                $messageEnv .= " Dilihat dari rutinitas bangun Anda ({$wokeUpHourFormatted}), **waktu berjemur terbaik (Sintesis Vitamin D)** hari ini antara jam **{$startJemur} s/d " . Carbon::parse($endJemur)->addHour()->format('H:i') . "**. ";
-                $tipsEnv[] = "Berjemurlah asik sekitar 10-15 menit di periode tersebut tanpa sunscreen agar hormon dan mood di pagi hari membaik.";
+                $messageEnv .= " Dilihat dari rutinitas bangun Anda ({$wokeUpHourFormatted}), <strong>waktu berjemur terbaik (Sintesis Vitamin D maksimal)</strong> hari ini ada di sekitar jam <strong>{$startJemur} s/d " . Carbon::parse($endJemur)->addHour()->format('H:i') . "</strong>. ";
+                $tipsEnv[] = "Berjemurlah asik sekitar 10-15 menit di periode pagi tersebut tanpa sunscreen untuk dapetin Vit. D murni. Cahaya di jam ini aman banget bikin kamu tetap *glowing* tanpa bikin gosong.";
             } else {
-                 $messageEnv .= " Saat ini tidak ada jendela ideal UV aman untuk kulit atau jendela sudah terlewat.";
+                 $messageEnv .= " Saat ini sudah tidak ada jendela berjemur pagi yang ideal buat Anda. Hindari memaksakan jemur siang/sore karena gampangnya cuma bikin kulit item/rusak.";
             }
 
             // Extreme weather warnings
