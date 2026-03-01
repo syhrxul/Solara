@@ -32,12 +32,14 @@ class TelegramWebhookController extends Controller
             $text    = $update['callback_query']['data'] ?? ''; 
             $callbackQueryId = $update['callback_query']['id'];
             
+            \Illuminate\Support\Facades\Log::info("Telegram Callback Query: " . $text);
             $this->telegram->answerCallbackQuery($callbackQueryId);
             
         } elseif (isset($update['message'])) {
             $message = $update['message'];
             $chatId  = $message['chat']['id'] ?? null;
             $text    = $message['text'] ?? '';
+            \Illuminate\Support\Facades\Log::info("Telegram Message: " . $text);
         } else {
             return response()->json(['status' => 'ok']);
         }
@@ -113,23 +115,53 @@ class TelegramWebhookController extends Controller
 
         if ($assignments->isNotEmpty()) {
             $msg .= "<b>📚 TUGAS KULIAH:</b>\n";
-            foreach ($assignments as $idx => $tugas) {
-                $batasWaktu = $tugas->deadline ? $tugas->deadline->format('d M Y') : 'Tanpa batas waktu';
-                $icon = $tugas->deadline && $tugas->deadline->isPast() ? '⚠️' : '📖';
+            $assignWithDeadline = $assignments->whereNotNull('deadline');
+            $assignWithout = $assignments->whereNull('deadline');
+
+            foreach ($assignWithDeadline as $idx => $tugas) {
+                $batasWaktu = $tugas->deadline->format('d M Y');
+                $icon = $tugas->deadline->isPast() ? '⚠️' : '📖';
                 $msg .= "{$icon} <b>{$tugas->title}</b>\n";
                 $msg .= "   Batas waktu: {$batasWaktu}\n";
+            }
+
+            if ($assignWithout->isNotEmpty()) {
+                if ($assignWithDeadline->isNotEmpty()) {
+                    $msg .= "➖ <i>Tanpa Batas Waktu:</i> ➖\n";
+                } else {
+                    $msg .= "➖ <i>Tanpa Batas Waktu:</i> ➖\n";
+                }
+                
+                foreach ($assignWithout as $idx => $tugas) {
+                    $msg .= "📖 <b>{$tugas->title}</b>\n";
+                }
             }
             $msg .= "\n";
         }
 
         if ($tasks->isNotEmpty()) {
             $msg .= "<b>✅ TO-DO LIST (TASKS):</b>\n";
-            foreach ($tasks as $idx => $task) {
-                $batasWaktu = clone ($task->due_date ?? now()); // Handle null due date if any, but let's assume due_date is available.
-                $batasTgl = $task->due_date ? $task->due_date->format('d M Y') : 'Kapan saja';
+            $tasksWithDeadline = $tasks->whereNotNull('due_date');
+            $tasksWithout = $tasks->whereNull('due_date');
+
+            foreach ($tasksWithDeadline as $idx => $task) {
+                $batasTgl = $task->due_date->format('d M Y');
                 $icon = $task->isOverdue() ? '⚠️' : '🔹';
                 $msg .= "{$icon} <b>{$task->title}</b>\n";
                 $msg .= "   Status: " . ucfirst($task->status) . " | Due: {$batasTgl}\n";
+            }
+
+            if ($tasksWithout->isNotEmpty()) {
+                if ($tasksWithDeadline->isNotEmpty()) {
+                    $msg .= "➖ <i>Tanpa Batas Waktu:</i> ➖\n";
+                } else {
+                    $msg .= "➖ <i>Tanpa Batas Waktu:</i> ➖\n";
+                }
+                
+                foreach ($tasksWithout as $idx => $task) {
+                    $msg .= "🔹 <b>{$task->title}</b>\n";
+                    $msg .= "   Status: " . ucfirst($task->status) . "\n";
+                }
             }
         }
 
@@ -219,6 +251,7 @@ class TelegramWebhookController extends Controller
 
     private function markHabitComplete($chatId, User $user, $habitId, $messageId)
     {
+        \Illuminate\Support\Facades\Log::info("Marking habit complete for {$habitId}");
         $habit = Habit::where('id', $habitId)->where('user_id', $user->id)->first();
         if (!$habit) {
             $this->telegram->editMessageText($chatId, $messageId, "Habit tidak ditemukan.", 'HTML');
@@ -226,6 +259,7 @@ class TelegramWebhookController extends Controller
         }
 
         if ($habit->isCompletedToday()) {
+            \Illuminate\Support\Facades\Log::info("Habit already completed.");
             $this->telegram->editMessageText($chatId, $messageId, "✅ <b>{$habit->name}</b> sudah diselesaikan!", 'HTML');
             dispatch(function () use ($chatId, $messageId) {
                 sleep(3);
@@ -233,6 +267,7 @@ class TelegramWebhookController extends Controller
                 $telegram->deleteMessage((string)$chatId, (int)$messageId);
             })->afterResponse();
         } else {
+            \Illuminate\Support\Facades\Log::info("Habit not yet completed via DB.");
             HabitLog::updateOrCreate(
                 [
                     'habit_id' => $habit->id,
