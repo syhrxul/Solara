@@ -19,3 +19,9 @@ Schedule::command('solara:notify-habits')
     ->everyMinute()
     ->withoutOverlapping()
     ->description('Pengingat Habit harian');
+
+// 🔔 Pengingat tugas kuliah dan tasks biasa (H-1 & Hari H) jam 07:00
+Schedule::command('solara:notify-tasks')
+    ->dailyAt('07:00')
+    ->withoutOverlapping()
+    ->description('Pengingat batas waktu tugas/tasks');

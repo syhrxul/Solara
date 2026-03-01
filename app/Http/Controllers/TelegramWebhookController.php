@@ -24,59 +24,69 @@ class TelegramWebhookController extends Controller
     {
         $update = $request->all();
 
-        if (isset($update['message'])) {
+        if (isset($update['callback_query'])) {
+            $message = $update['callback_query']['message'];
+            $chatId  = $message['chat']['id'] ?? null;
+            $text    = $update['callback_query']['data'] ?? ''; // This receives the callback_data
+            
+            // acknowledge callback query
+            $callbackQueryId = $update['callback_query']['id'];
+            Http::get("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/answerCallbackQuery", [
+                'callback_query_id' => $callbackQueryId
+            ]);
+            
+        } elseif (isset($update['message'])) {
             $message = $update['message'];
             $chatId  = $message['chat']['id'] ?? null;
             $text    = $message['text'] ?? '';
+        } else {
+            return response()->json(['status' => 'ok']);
+        }
 
-            if (!$chatId) {
-                return response()->json(['status' => 'ok']);
-            }
+        if (!$chatId) {
+            return response()->json(['status' => 'ok']);
+        }
 
-            // Cari user berdasarkan chat_id
-            /** @var User|null $user */
-            $user = User::where('telegram_chat_id', (string) $chatId)->first();
+        // Cari user berdasarkan chat_id
+        /** @var User|null $user */
+        $user = User::where('telegram_chat_id', (string) $chatId)->first();
 
-            if (!$user) {
-                $this->telegram->sendMessage($chatId, "Maaf, akun Solara Anda belum disinkronkan dengan Chat ID Telegram ini.");
-                return response()->json(['status' => 'ok']);
-            }
+        if (!$user) {
+            $this->telegram->sendMessage($chatId, "Maaf, akun Solara Anda belum disinkronkan dengan Chat ID Telegram ini.");
+            return response()->json(['status' => 'ok']);
+        }
 
-            $keyboard = [
-                'keyboard' => [
-                    [
-                        ['text' => '📋 Tugas'],
-                        ['text' => '🗓️ Jadwal'],
-                        ['text' => '🔄 Habits']
-                    ]
-                ],
-                'resize_keyboard' => true,
-                'is_persistent' => true,
-            ];
+        $inlineKeyboard = [
+            'inline_keyboard' => [
+                [
+                    ['text' => '📋 Tugas', 'callback_data' => '/tasks'],
+                    ['text' => '🗓️ Jadwal', 'callback_data' => '/jadwal'],
+                    ['text' => '🔄 Habits', 'callback_data' => '/habits']
+                ]
+            ]
+        ];
 
-            $lowText = strtolower(trim($text));
+        $lowText = strtolower(trim($text));
 
-            if ($lowText === '/start' || $lowText === 'menu' || $lowText === 'halo') {
-                $this->telegram->sendMessage(
-                    $chatId, 
-                    "Halo {$user->name} 👋\n\nSelamat datang di Bot Solara!\nSilakan gunakan menu di bawah untuk memeriksa jadwal, tugas, dan habits Anda secara cepat.", 
-                    'HTML', 
-                    $keyboard
-                );
-            } elseif (in_array($lowText, ['📋 tugas', '/tasks', '/tugas', 'tugas', 'tugas kuliah', 'tasks'])) {
-                $this->sendTasksAndAssignments($chatId, $user, $keyboard);
-            } elseif (in_array($lowText, ['🗓️ jadwal', '/jadwal', 'jadwal', 'jadwal kuliah'])) {
-                $this->sendTodaySchedule($chatId, $user, $keyboard);
-            } elseif (in_array($lowText, ['🔄 habits', '/habits', '/habit', 'habbit', 'habit', 'habits'])) {
-                $this->sendTodayHabits($chatId, $user, $keyboard);
-            } else {
-                $this->telegram->sendMessage(
-                    $chatId, 
-                    "Perintah tidak dikenali. Silakan gunakan tombol menu di bawah 👇", 
-                    'HTML', 
-                    $keyboard
-                );
-            }
+        if ($lowText === '/start' || $lowText === 'menu' || $lowText === 'halo') {
+            $this->telegram->sendMessage(
+                $chatId, 
+                "Halo {$user->name} 👋\n\nSelamat datang di Bot Solara!\nSilakan gunakan menu di bawah untuk memeriksa jadwal, tugas, dan habits Anda secara cepat.", 
+                'HTML', 
+                $inlineKeyboard
+            );
+        } elseif (in_array($lowText, ['📋 tugas', '/task', '/tasks', '/tugas', 'tugas', 'tugas kuliah', 'tasks'])) {
+            $this->sendTasksAndAssignments($chatId, $user, $inlineKeyboard);
+        } elseif (in_array($lowText, ['🗓️ jadwal', '/jadwal', 'jadwal', 'jadwal kuliah', '/schedule'])) {
+            $this->sendTodaySchedule($chatId, $user, $inlineKeyboard);
+        } elseif (in_array($lowText, ['🔄 habits', '/habits', '/habit', 'habbit', 'habit', 'habits'])) {
+            $this->sendTodayHabits($chatId, $user, $inlineKeyboard);
+        } else {
+            $this->telegram->sendMessage(
+                $chatId, 
+                "Perintah tidak dikenali. Silakan ketik /menu untuk memanggil menu interaktif 👇", 
+                'HTML'
+            );
         }
 
         return response()->json(['status' => 'ok']);
