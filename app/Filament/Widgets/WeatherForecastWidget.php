@@ -6,6 +6,8 @@ use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
 use Livewire\Attributes\On;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Tables\Contracts\HasTable;
@@ -14,8 +16,9 @@ use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use App\Models\HealthMetric;
 
-class WeatherForecastWidget extends Widget implements HasForms, HasTable
+class WeatherForecastWidget extends Widget implements HasForms, HasTable, HasActions
 {
+    use InteractsWithActions;
     use InteractsWithForms;
     use InteractsWithTable;
 
