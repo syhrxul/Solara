@@ -23,16 +23,14 @@ class BioHealthOverview extends BaseWidget
         $humidity = $this->weather['humidity'] ?? '--';
         $uvIndex = $this->weather['uv_index'] ?? 0;
 
-        // Deskripsi Cuaca sederhana
         $code = $this->weather['weather_code'] ?? -1;
         $weatherDesc = 'Cerah';
         if (in_array($code, [51,53,55,61,63,65,80,81])) { $weatherDesc = 'Hujan'; }
         if (in_array($code, [95,96,99])) { $weatherDesc = 'Badai Petir'; }
         if (in_array($code, [2,3,45,48])) { $weatherDesc = 'Berawan'; }
 
-        // Use full text without truncation
-        $skinDesc = $this->skinWarning['message'] ?? '';
-        $sleepDesc = $this->sleepCorrelation['message'] ?? '';
+        $skinDesc = strip_tags($this->skinWarning['message'] ?? '');
+        $sleepDesc = strip_tags($this->sleepCorrelation['message'] ?? '');
 
         return [
             Stat::make('Cuaca Hari Ini', "{$temp}°C")
