@@ -54,7 +54,7 @@ class BioHealthDetailedStats extends BaseWidget
                 ->color($this->skinWarning['color'] ?? 'primary')
                 ->icon($this->skinWarning['icon'] ?? 'heroicon-o-face-smile'),
                 
-            Stat::make('Reservasi Energi', $this->sleepCorrelation['title'] ?? '-')
+            Stat::make('Sleep', $this->sleepCorrelation['title'] ?? '-')
                 ->description($sleepDesc)
                 ->color($this->sleepCorrelation['color'] ?? 'primary')
                 ->icon($this->sleepCorrelation['icon'] ?? 'heroicon-o-moon'),

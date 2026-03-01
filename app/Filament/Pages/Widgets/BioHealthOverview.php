@@ -32,8 +32,10 @@ class BioHealthOverview extends BaseWidget
         $skinDesc = strip_tags($this->skinWarning['message'] ?? '');
         $sleepDesc = strip_tags($this->sleepCorrelation['message'] ?? '');
 
+        $timeNow = $this->weather['current_time'] ?? '--:--';
+
         return [
-            Stat::make('Cuaca Hari Ini', "{$temp}°C")
+            Stat::make("Cuaca ($timeNow)", "{$temp}°C")
                 ->description("{$weatherDesc} (UV: {$uvIndex}) - {$location}")
                 ->color('info')
                 ->icon('heroicon-o-cloud'),

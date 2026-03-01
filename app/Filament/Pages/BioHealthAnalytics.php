@@ -139,6 +139,7 @@ class BioHealthAnalytics extends Page implements HasTable
                     'weather_code' => $data['current']['weather_code'] ?? -1,
                     'hourly_time' => $hourlyTime,
                     'hourly_uv' => $hourlyUv,
+                    'current_time' => Carbon::now('Asia/Jakarta')->format('H:i'),
                 ];
 
             } else {
