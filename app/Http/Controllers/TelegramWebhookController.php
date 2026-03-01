@@ -11,6 +11,7 @@ use App\Models\Habit;
 use App\Models\HabitLog;
 use App\Services\TelegramService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;
 
 class TelegramWebhookController extends Controller
 {
@@ -229,8 +230,11 @@ class TelegramWebhookController extends Controller
 
         if ($habit->isCompletedToday()) {
             $this->telegram->editMessageText($chatId, $messageId, "✅ <b>{$habit->name}</b> sudah diselesaikan!", 'HTML');
-            sleep(3);
-            $this->telegram->deleteMessage((string)$chatId, (int)$messageId);
+            dispatch(function () use ($chatId, $messageId) {
+                sleep(3);
+                $telegram = new TelegramService();
+                $telegram->deleteMessage((string)$chatId, (int)$messageId);
+            })->afterResponse();
         } else {
             HabitLog::updateOrCreate(
                 [
@@ -263,9 +267,12 @@ class TelegramWebhookController extends Controller
             
             $this->telegram->editMessageText($chatId, $messageId, $newMsg, 'HTML');
             
-            // Delete directly after 5 seconds to avoid requiring Queue Worker
-            sleep(5);
-            $this->telegram->deleteMessage((string)$chatId, (int)$messageId);
+            // Execute background delay securely without blocking Telegram webhook thread
+            dispatch(function () use ($chatId, $messageId) {
+                sleep(5);
+                $telegram = new TelegramService();
+                $telegram->deleteMessage((string)$chatId, (int)$messageId);
+            })->afterResponse();
         }
     }
 }
