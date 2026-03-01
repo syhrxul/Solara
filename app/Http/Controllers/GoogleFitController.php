@@ -33,6 +33,10 @@ class GoogleFitController extends Controller
 
     public function redirect()
     {
+        if (empty(env('GOOGLE_CLIENT_ID')) || empty(env('GOOGLE_CLIENT_SECRET'))) {
+            return redirect()->back()->with('error', 'Google OAuth belum dikonfigurasi. Tambahkan GOOGLE_CLIENT_ID dan GOOGLE_CLIENT_SECRET ke file .env server.');
+        }
+
         $client = $this->getClient();
         return redirect($client->createAuthUrl());
     }
