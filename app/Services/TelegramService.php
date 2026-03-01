@@ -73,6 +73,26 @@ class TelegramService
         }
     }
 
+    public function answerCallbackQuery(string $callbackQueryId, ?string $text = null, bool $showAlert = false): bool
+    {
+        try {
+            $payload = [
+                'callback_query_id' => $callbackQueryId,
+            ];
+            
+            if ($text) {
+                $payload['text'] = $text;
+                $payload['show_alert'] = $showAlert;
+            }
+
+            $response = Http::post("{$this->apiUrl}/answerCallbackQuery", $payload);
+
+            return $response->successful() && $response->json('ok');
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
     public function deleteMessage(string $chatId, int $messageId): bool
     {
         try {

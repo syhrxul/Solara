@@ -29,13 +29,10 @@ class TelegramWebhookController extends Controller
         if (isset($update['callback_query'])) {
             $message = $update['callback_query']['message'];
             $chatId  = $message['chat']['id'] ?? null;
-            $text    = $update['callback_query']['data'] ?? ''; // This receives the callback_data
-            
-            // acknowledge callback query
+            $text    = $update['callback_query']['data'] ?? ''; 
             $callbackQueryId = $update['callback_query']['id'];
-            Http::get("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/answerCallbackQuery", [
-                'callback_query_id' => $callbackQueryId
-            ]);
+            
+            $this->telegram->answerCallbackQuery($callbackQueryId);
             
         } elseif (isset($update['message'])) {
             $message = $update['message'];
