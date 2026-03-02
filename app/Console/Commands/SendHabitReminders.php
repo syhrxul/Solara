@@ -7,6 +7,7 @@ use App\Models\User;
 use Filament\Notifications\Notification;
 use Illuminate\Console\Command;
 use App\Services\TelegramService;
+use Illuminate\Support\Facades\Log;
 
 class SendHabitReminders extends Command
 {
@@ -16,14 +17,19 @@ class SendHabitReminders extends Command
 
     public function handle(): int
     {
-        $nowTime = now()->format('H:i');
-        $dayOfWeek = strtolower(now()->englishDayOfWeek);
+        $now = now();
+        $nowTime = $now->format('H:i');
+        $dayOfWeek = strtolower($now->englishDayOfWeek);
+
+        Log::info("SendHabitReminders: Checking habits for time {$nowTime}");
 
         $habits = Habit::where('is_active', true)
             ->whereNotNull('reminder_time')
-            ->where('reminder_time', 'like', $nowTime . '%')
+            ->whereRaw("DATE_FORMAT(reminder_time, '%H:%i') = ?", [$nowTime])
             ->with('user')
             ->get();
+
+        Log::info("SendHabitReminders: Found {$habits->count()} habits matching time {$nowTime}");
 
         if ($habits->isEmpty()) {
             return self::SUCCESS;
@@ -33,17 +39,12 @@ class SendHabitReminders extends Command
             $user = $habit->user;
             if (!$user) continue;
 
-            $shouldDoToday = false;
-            if ($habit->frequency === 'daily') {
-                $shouldDoToday = true;
-            } elseif ($habit->frequency === 'weekly') {
-                $days = is_string($habit->frequency_days) ? json_decode($habit->frequency_days, true) : $habit->frequency_days;
-                if (is_array($days) && in_array($dayOfWeek, $days)) {
-                    $shouldDoToday = true;
-                }
+            // Check frequency menggunakan method model
+            if (!$habit->shouldDoOnDay($dayOfWeek)) {
+                continue;
             }
 
-            if (!$shouldDoToday || $habit->isCompletedToday()) {
+            if ($habit->isCompletedToday()) {
                 continue;
             }
 
@@ -58,13 +59,37 @@ class SendHabitReminders extends Command
                 ->iconColor('warning')
                 ->sendToDatabase($user);
 
+            Log::info("SendHabitReminders: DB notification sent for habit '{$habit->name}' to user '{$user->name}'");
+
             // Telegram Notification
             if (!empty($user->telegram_chat_id)) {
                 $settings = $user->settings ?? [];
                 if ($settings['telegram_notify_habit'] ?? true) {
-                    $telegram = new TelegramService();
-                    $msg = "⏰ <b>Waktunya: {$habit->name}</b>\n\nJangan lupa selesaikan habit Anda hari ini! Ayo pertahankan rentetan capaianmu 🔥";
-                    $telegram->sendMessage($user->telegram_chat_id, $msg);
+                    try {
+                        $telegram = new TelegramService();
+                        
+                        $streakInfo = $habit->current_streak > 0
+                            ? "Streak saat ini: <b>{$habit->current_streak} 🔥</b>"
+                            : "Mulai bangun streak baru! 💪";
+
+                        $msg = "⏰ <b>Waktunya: {$habit->name}</b>\n\n";
+                        $msg .= "Jangan lupa selesaikan habit Anda hari ini!\n";
+                        $msg .= "{$streakInfo}\n\n";
+                        $msg .= "Ayo pertahankan konsistensimu 🔥";
+
+                        $inlineBtn = [
+                            'inline_keyboard' => [
+                                [
+                                    ['text' => '✅ Tandai Selesai', 'callback_data' => 'chk_hab_' . $habit->id]
+                                ]
+                            ]
+                        ];
+
+                        $result = $telegram->sendMessage($user->telegram_chat_id, $msg, 'HTML', $inlineBtn);
+                        Log::info("SendHabitReminders: Telegram notification for habit '{$habit->name}' " . ($result ? 'sent OK' : 'FAILED'));
+                    } catch (\Exception $e) {
+                        Log::error("SendHabitReminders: Telegram send error for habit '{$habit->name}': " . $e->getMessage());
+                    }
                 }
             }
         }

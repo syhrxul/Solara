@@ -26,13 +26,18 @@ class Habit extends Model
         'is_active',
         'current_streak',
         'longest_streak',
+        'last_completed_date',
+        'streak_broken_at',
+        'streak_before_break',
         'started_at',
     ];
 
     protected $casts = [
-        'frequency_days' => 'array',
-        'is_active'      => 'boolean',
-        'started_at'     => 'date',
+        'frequency_days'      => 'array',
+        'is_active'           => 'boolean',
+        'started_at'          => 'date',
+        'last_completed_date' => 'date',
+        'streak_broken_at'    => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -54,6 +59,81 @@ class Habit extends Model
     {
         $log = $this->todayLog();
         return $log && $log->completed;
+    }
+
+    /**
+     * Check apakah streak bisa di-restore.
+     * Bisa restore jika streak putus kurang dari 24 jam yang lalu.
+     */
+    public function canRestoreStreak(): bool
+    {
+        if (!$this->streak_broken_at) {
+            return false;
+        }
+
+        return $this->streak_broken_at->diffInHours(now()) < 24
+            && $this->streak_before_break > 0;
+    }
+
+    /**
+     * Check apakah habit ini seharusnya dilakukan pada hari tertentu.
+     */
+    public function shouldDoOnDay(?string $dayOfWeek = null): bool
+    {
+        $dayOfWeek = $dayOfWeek ?: strtolower(now()->englishDayOfWeek);
+
+        if ($this->frequency === 'daily') {
+            return true;
+        }
+
+        if ($this->frequency === 'weekly') {
+            $days = is_string($this->frequency_days)
+                ? json_decode($this->frequency_days, true)
+                : $this->frequency_days;
+
+            return is_array($days) && in_array($dayOfWeek, $days);
+        }
+
+        return false;
+    }
+
+    /**
+     * Restore streak yang sudah putus (dalam 24 jam).
+     * Mengembalikan streak lama tapi entry saat ini TIDAK dihitung sebagai
+     * tambahan streak — akan dihitung pada completion berikutnya.
+     */
+    public function restoreStreak(): bool
+    {
+        if (!$this->canRestoreStreak()) {
+            return false;
+        }
+
+        $this->update([
+            'current_streak'     => $this->streak_before_break,
+            'streak_broken_at'   => null,
+            'streak_before_break' => 0,
+            // last_completed_date di-set ke kemarin (karena hari ini adalah restore,
+            // bukan completion baru — streak baru dihitung pada completion berikutnya)
+            'last_completed_date' => today()->subDay(),
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Putuskan streak habit ini.
+     */
+    public function breakStreak(): void
+    {
+        if ($this->current_streak <= 0) {
+            return;
+        }
+
+        $this->update([
+            'streak_before_break' => $this->current_streak,
+            'streak_broken_at'    => now(),
+            'current_streak'      => 0,
+        ]);
     }
 
     public function completionRate(int $days = 30): float

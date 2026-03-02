@@ -12,6 +12,7 @@ use App\Models\HabitLog;
 use App\Services\TelegramService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class TelegramWebhookController extends Controller
 {
@@ -32,14 +33,14 @@ class TelegramWebhookController extends Controller
             $text    = $update['callback_query']['data'] ?? ''; 
             $callbackQueryId = $update['callback_query']['id'];
             
-            \Illuminate\Support\Facades\Log::info("Telegram Callback Query: " . $text);
+            Log::info("Telegram Callback Query: " . $text);
             $this->telegram->answerCallbackQuery($callbackQueryId);
             
         } elseif (isset($update['message'])) {
             $message = $update['message'];
             $chatId  = $message['chat']['id'] ?? null;
             $text    = $message['text'] ?? '';
-            \Illuminate\Support\Facades\Log::info("Telegram Message: " . $text);
+            Log::info("Telegram Message: " . $text);
         } else {
             return response()->json(['status' => 'ok']);
         }
@@ -87,6 +88,9 @@ class TelegramWebhookController extends Controller
         } elseif (str_starts_with($lowText, 'chk_hab_')) {
             $habitId = str_replace('chk_hab_', '', $lowText);
             $this->markHabitComplete($chatId, $user, $habitId, $message['message_id']);
+        } elseif (str_starts_with($lowText, 'restore_hab_')) {
+            $habitId = str_replace('restore_hab_', '', $lowText);
+            $this->restoreHabitStreak($chatId, $user, $habitId, $message['message_id']);
         } else {
             $this->telegram->sendMessage(
                 $chatId, 
@@ -210,36 +214,44 @@ class TelegramWebhookController extends Controller
         $hasTarget = false;
 
         foreach ($habits as $habit) {
-            $dayOfWeek = strtolower($now->englishDayOfWeek);
-            $shouldDoToday = false;
-            
-            if ($habit->frequency === 'daily') {
-                $shouldDoToday = true;
-            } elseif ($habit->frequency === 'weekly') {
-                $days = is_string($habit->frequency_days) ? json_decode($habit->frequency_days, true) : $habit->frequency_days;
-                if (is_array($days) && in_array($dayOfWeek, $days)) {
-                    $shouldDoToday = true;
-                }
+            if (!$habit->shouldDoOnDay()) {
+                continue;
             }
 
-            if ($shouldDoToday) {
-                $hasTarget = true;
-                $isDone = $habit->isCompletedToday();
+            $hasTarget = true;
+            $isDone = $habit->isCompletedToday();
 
-                if ($isDone) {
-                    $msg = "✅ <s><b>{$habit->name}</b></s>\nAnda sudah menyelesaikan ini hari ini! Streak: <b>{$habit->current_streak} 🔥</b>";
-                    $this->telegram->sendMessage($chatId, $msg, 'HTML');
-                } else {
-                    $msg = "⭕ <b>{$habit->name}</b>\n\nYuk jalankan segera untuk mempertahankan Streak Anda: <b>{$habit->current_streak} 🔥</b>";
-                    $inlineBtn = [
-                        'inline_keyboard' => [
-                            [
-                                ['text' => '✅ Tandai Selesai', 'callback_data' => 'chk_hab_' . $habit->id]
-                            ]
+            if ($isDone) {
+                $msg = "✅ <s><b>{$habit->name}</b></s>\nAnda sudah menyelesaikan ini hari ini! Streak: <b>{$habit->current_streak} 🔥</b>";
+                $this->telegram->sendMessage($chatId, $msg, 'HTML');
+            } elseif ($habit->canRestoreStreak()) {
+                // Streak putus, bisa di-restore
+                $msg = "💔 <b>{$habit->name}</b>\n\n";
+                $msg .= "Streak <b>{$habit->streak_before_break} hari</b> Anda telah putus!\n";
+                $msg .= "⏳ Anda masih bisa restore dalam waktu terbatas.\n\n";
+                $msg .= "Setelah restore, streak lama akan dikembalikan.\nHari ini tidak dihitung—dihitung pada completion berikutnya.";
+                
+                $inlineBtn = [
+                    'inline_keyboard' => [
+                        [
+                            ['text' => '♻️ Restore Streak', 'callback_data' => 'restore_hab_' . $habit->id]
+                        ],
+                        [
+                            ['text' => '✅ Mulai Streak Baru', 'callback_data' => 'chk_hab_' . $habit->id]
                         ]
-                    ];
-                    $this->telegram->sendMessage($chatId, $msg, 'HTML', $inlineBtn);
-                }
+                    ]
+                ];
+                $this->telegram->sendMessage($chatId, $msg, 'HTML', $inlineBtn);
+            } else {
+                $msg = "⭕ <b>{$habit->name}</b>\n\nYuk jalankan segera untuk mempertahankan Streak Anda: <b>{$habit->current_streak} 🔥</b>";
+                $inlineBtn = [
+                    'inline_keyboard' => [
+                        [
+                            ['text' => '✅ Tandai Selesai', 'callback_data' => 'chk_hab_' . $habit->id]
+                        ]
+                    ]
+                ];
+                $this->telegram->sendMessage($chatId, $msg, 'HTML', $inlineBtn);
             }
         }
 
@@ -251,7 +263,7 @@ class TelegramWebhookController extends Controller
 
     private function markHabitComplete($chatId, User $user, $habitId, $messageId)
     {
-        \Illuminate\Support\Facades\Log::info("Marking habit complete for {$habitId}");
+        Log::info("Marking habit complete for {$habitId}");
         $habit = Habit::where('id', $habitId)->where('user_id', $user->id)->first();
         if (!$habit) {
             $this->telegram->editMessageText($chatId, $messageId, "Habit tidak ditemukan.", 'HTML');
@@ -259,7 +271,7 @@ class TelegramWebhookController extends Controller
         }
 
         if ($habit->isCompletedToday()) {
-            \Illuminate\Support\Facades\Log::info("Habit already completed.");
+            Log::info("Habit already completed.");
             $this->telegram->editMessageText($chatId, $messageId, "✅ <b>{$habit->name}</b> sudah diselesaikan!", 'HTML');
             dispatch(function () use ($chatId, $messageId) {
                 sleep(3);
@@ -267,7 +279,7 @@ class TelegramWebhookController extends Controller
                 $telegram->deleteMessage((string)$chatId, (int)$messageId);
             })->afterResponse();
         } else {
-            \Illuminate\Support\Facades\Log::info("Habit not yet completed via DB.");
+            Log::info("Habit not yet completed via DB.");
             HabitLog::updateOrCreate(
                 [
                     'habit_id' => $habit->id,
@@ -280,10 +292,14 @@ class TelegramWebhookController extends Controller
                 ]
             );
 
+            // Update streak dan tracking
             $newStreak = $habit->current_streak + 1;
             $habit->update([
-                'current_streak' => $newStreak,
-                'longest_streak' => max($habit->longest_streak, $newStreak),
+                'current_streak'      => $newStreak,
+                'longest_streak'      => max($habit->longest_streak, $newStreak),
+                'last_completed_date' => today(),
+                'streak_broken_at'    => null,
+                'streak_before_break' => 0,
             ]);
 
             $motivationalMessages = [
@@ -299,12 +315,60 @@ class TelegramWebhookController extends Controller
             
             $this->telegram->editMessageText($chatId, $messageId, $newMsg, 'HTML');
             
-            // Execute background delay securely without blocking Telegram webhook thread
             dispatch(function () use ($chatId, $messageId) {
                 sleep(5);
                 $telegram = new TelegramService();
                 $telegram->deleteMessage((string)$chatId, (int)$messageId);
             })->afterResponse();
         }
+    }
+
+    private function restoreHabitStreak($chatId, User $user, $habitId, $messageId)
+    {
+        Log::info("Restoring habit streak for {$habitId}");
+        $habit = Habit::where('id', $habitId)->where('user_id', $user->id)->first();
+        
+        if (!$habit) {
+            $this->telegram->editMessageText($chatId, $messageId, "Habit tidak ditemukan.", 'HTML');
+            return;
+        }
+
+        if (!$habit->canRestoreStreak()) {
+            $this->telegram->editMessageText($chatId, $messageId, "⏳ Waktu restore sudah habis. Streak tidak bisa dipulihkan.", 'HTML');
+            return;
+        }
+
+        $oldStreakValue = $habit->streak_before_break;
+
+        // Restore streak
+        $habit->restoreStreak();
+
+        // Buat log sebagai restore entry (hari ini tidak menambah streak)
+        HabitLog::updateOrCreate(
+            [
+                'habit_id'    => $habit->id,
+                'user_id'     => $user->id,
+                'logged_date' => today(),
+            ],
+            [
+                'completed' => true,
+                'count'     => $habit->target_count ?? 1,
+                'notes'     => 'Streak restored',
+            ]
+        );
+
+        $newMsg = "♻️ <b>Streak Restored!</b>\n\n";
+        $newMsg .= "✅ <b>{$habit->name}</b>\n";
+        $newMsg .= "Streak <b>{$oldStreakValue} hari</b> berhasil dipulihkan! 🔥\n\n";
+        $newMsg .= "<i>Catatan: Hari ini tidak dihitung sebagai tambahan streak. Streak baru akan bertambah pada completion berikutnya.</i>\n\n";
+        $newMsg .= "<i>Pesan ini akan otomatis dihapus dalam 7 detik...</i>";
+
+        $this->telegram->editMessageText($chatId, $messageId, $newMsg, 'HTML');
+
+        dispatch(function () use ($chatId, $messageId) {
+            sleep(7);
+            $telegram = new TelegramService();
+            $telegram->deleteMessage((string)$chatId, (int)$messageId);
+        })->afterResponse();
     }
 }

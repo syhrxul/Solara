@@ -22,6 +22,12 @@ Schedule::command('solara:notify-habits')
 
 // 🔔 Pengingat tugas kuliah dan tasks biasa (H-1 & Hari H) jam 07:00
 Schedule::command('solara:notify-tasks')
-    ->dailyAt('07:00')
+    ->dailyAt('04:00')
     ->withoutOverlapping()
     ->description('Pengingat batas waktu tugas/tasks');
+
+// 💔 Cek streak habit yang putus (setiap hari jam 00:05)
+Schedule::command('solara:check-habit-streaks')
+    ->dailyAt('00:05')
+    ->withoutOverlapping()
+    ->description('Cek dan putuskan streak habit yang tidak dikerjakan kemarin');

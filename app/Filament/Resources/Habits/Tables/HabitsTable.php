@@ -52,9 +52,15 @@ class HabitsTable
 
                 TextColumn::make('current_streak')
                     ->label('🔥 Streak')
-                    ->suffix(fn ($record) => ' hari')
+                    ->formatStateUsing(function ($record) {
+                        $streak = $record->current_streak;
+                        if ($streak == 0 && $record->canRestoreStreak()) {
+                            return "💔 Putus ({$record->streak_before_break} hari)";
+                        }
+                        return "{$streak} hari";
+                    })
                     ->sortable()
-                    ->color('warning'),
+                    ->color(fn ($record) => $record->current_streak == 0 && $record->canRestoreStreak() ? 'danger' : 'warning'),
 
                 TextColumn::make('longest_streak')
                     ->label('🏆 Rekor')
@@ -82,6 +88,45 @@ class HabitsTable
                     ->label('Status Aktif'),
             ])
             ->recordActions([
+                // Tombol restore streak (hanya tampil jika streak bisa di-restore)
+                Action::make('restore_streak')
+                    ->label('♻️ Restore Streak')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->visible(fn ($record) => $record->canRestoreStreak() && !$record->isCompletedToday())
+                    ->requiresConfirmation()
+                    ->modalHeading('Restore Streak?')
+                    ->modalDescription(fn ($record) => "Anda akan me-restore streak {$record->streak_before_break} hari untuk \"{$record->name}\". Streak Anda yang lama akan dikembalikan, namun hari ini tidak dihitung sebagai tambahan streak — akan dihitung pada completion berikutnya.")
+                    ->action(function ($record) {
+                        if ($record->restoreStreak()) {
+                            // Buat log hari ini sebagai "restore" (completed, tapi streak tidak bertambah)
+                            HabitLog::updateOrCreate(
+                                [
+                                    'habit_id'    => $record->id,
+                                    'user_id'     => auth()->id(),
+                                    'logged_date' => today(),
+                                ],
+                                [
+                                    'completed' => true,
+                                    'count'     => $record->target_count ?? 1,
+                                    'notes'     => 'Streak restored',
+                                ]
+                            );
+
+                            Notification::make()
+                                ->title("♻️ Streak berhasil di-restore!")
+                                ->body("Streak {$record->current_streak} hari untuk \"{$record->name}\" telah dikembalikan. Streak baru akan dihitung pada completion berikutnya.")
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Gagal restore streak')
+                                ->body('Waktu restore sudah lewat 24 jam.')
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+
                 Action::make('toggle_today')
                     ->label(fn ($record) => $record->isCompletedToday() ? 'Batalkan' : 'Selesai Hari Ini')
                     ->icon(fn ($record) => $record->isCompletedToday() ? 'heroicon-o-x-mark' : 'heroicon-o-check')
@@ -117,17 +162,34 @@ class HabitsTable
                                 ]
                             );
 
-                            // Update streak
-                            $newStreak = $record->current_streak + 1;
-                            $record->update([
-                                'current_streak' => $newStreak,
-                                'longest_streak' => max($record->longest_streak, $newStreak),
-                            ]);
+                            // Cek apakah ini restore (notes = 'Streak restored')
+                            // Jika ini adalah hari restore, jangan tambah streak
+                            $isRestoreDay = $log && $log->notes === 'Streak restored';
 
-                            Notification::make()
-                                ->title('🎉 Habit selesai hari ini!')
-                                ->success()
-                                ->send();
+                            if ($isRestoreDay) {
+                                // Hari ini sudah dipakai untuk restore, tidak tambah streak
+                                Notification::make()
+                                    ->title('✅ Habit selesai!')
+                                    ->body('Streak tidak bertambah karena hari ini adalah hari restore.')
+                                    ->success()
+                                    ->send();
+                            } else {
+                                // Update streak
+                                $newStreak = $record->current_streak + 1;
+                                $record->update([
+                                    'current_streak'      => $newStreak,
+                                    'longest_streak'      => max($record->longest_streak, $newStreak),
+                                    'last_completed_date' => $today,
+                                    'streak_broken_at'    => null,
+                                    'streak_before_break' => 0,
+                                ]);
+
+                                Notification::make()
+                                    ->title('🎉 Habit selesai hari ini!')
+                                    ->body("Streak saat ini: {$newStreak} hari 🔥")
+                                    ->success()
+                                    ->send();
+                            }
                         }
                     }),
                 EditAction::make(),
