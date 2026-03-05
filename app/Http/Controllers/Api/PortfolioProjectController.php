@@ -34,7 +34,7 @@ class PortfolioProjectController extends Controller
             'image'             => 'nullable|image|max:5120',
             'category'          => 'nullable|string|max:50',
             'demo_url'          => 'nullable|string|max:500',
-            'source_url'        => 'nullable|string|max:500',
+            'source_url'        => 'nullable',
             'tags'              => 'nullable|array',
             'tags.*'            => 'string|max:50',
             'is_featured'       => 'nullable|boolean',
@@ -46,6 +46,10 @@ class PortfolioProjectController extends Controller
         // Handle image upload
         if ($request->hasFile('image')) {
             $validated['image'] = '/storage/' . $request->file('image')->store('portfolio/projects', 'public');
+        }
+
+        if ($request->hasFile('source_url')) {
+            $validated['source_url'] = '/storage/' . $request->file('source_url')->store('portfolio/projects', 'public');
         }
 
         $project = $request->user()->portfolioProjects()->create($validated);
@@ -70,7 +74,7 @@ class PortfolioProjectController extends Controller
             'image'             => 'nullable|image|max:5120',
             'category'          => 'nullable|string|max:50',
             'demo_url'          => 'nullable|string|max:500',
-            'source_url'        => 'nullable|string|max:500',
+            'source_url'        => 'nullable',
             'tags'              => 'nullable|array',
             'tags.*'            => 'string|max:50',
             'is_featured'       => 'nullable|boolean',
@@ -81,6 +85,10 @@ class PortfolioProjectController extends Controller
 
         if ($request->hasFile('image')) {
             $validated['image'] = '/storage/' . $request->file('image')->store('portfolio/projects', 'public');
+        }
+
+        if ($request->hasFile('source_url')) {
+            $validated['source_url'] = '/storage/' . $request->file('source_url')->store('portfolio/projects', 'public');
         }
 
         $portfolioProject->update($validated);
