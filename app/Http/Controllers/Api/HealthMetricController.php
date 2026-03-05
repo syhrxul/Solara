@@ -24,6 +24,13 @@ class HealthMetricController extends Controller
             ->additional(['success' => true]);
     }
 
+
+    public function sync(Request $request)
+    {
+        \Illuminate\Support\Facades\Artisan::call('health:sync', ['--user' => $request->user()->id]);
+        return $this->success(null, 'Data Google Fit berhasil disinkronisasi', 200);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

@@ -31,3 +31,9 @@ Schedule::command('solara:check-habit-streaks')
     ->dailyAt('00:05')
     ->withoutOverlapping()
     ->description('Cek dan putuskan streak habit yang tidak dikerjakan kemarin');
+
+// 🔄 Tarik data kesehatan dari Google Fit setiap 3 jam
+Schedule::command('health:sync')
+    ->everyThreeHours()
+    ->withoutOverlapping()
+    ->description('Sinkronisasi data Google Fit');

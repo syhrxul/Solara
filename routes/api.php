@@ -92,6 +92,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->parameters(['assignments' => 'classAssignment']);
 
     // --- Health Metrics ---
+    Route::post('/health/sync', [HealthMetricController::class, 'sync']);
     Route::apiResource('health', HealthMetricController::class)
         ->parameters(['health' => 'healthMetric']);
 
