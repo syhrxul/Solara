@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -98,5 +99,26 @@ class User extends Authenticatable
     public function categories(): HasMany
     {
         return $this->hasMany(Category::class);
+    }
+
+    // Portfolio
+    public function portfolioProfile(): HasOne
+    {
+        return $this->hasOne(PortfolioProfile::class);
+    }
+
+    public function portfolioProjects(): HasMany
+    {
+        return $this->hasMany(PortfolioProject::class);
+    }
+
+    public function portfolioCertificates(): HasMany
+    {
+        return $this->hasMany(PortfolioCertificate::class);
+    }
+
+    public function portfolioExperiences(): HasMany
+    {
+        return $this->hasMany(PortfolioExperience::class);
     }
 }

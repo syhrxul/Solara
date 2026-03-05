@@ -107,4 +107,43 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/settings', [SettingsController::class, 'update']);
     Route::put('/settings/telegram', [SettingsController::class, 'updateTelegram']);
     Route::put('/settings/location', [SettingsController::class, 'updateLocation']);
+
+    // --- Portfolio (protected, manage own portfolio) ---
+    Route::prefix('portfolio')->group(function () {
+        // Profile
+        Route::get('/profile', [\App\Http\Controllers\Api\PortfolioProfileController::class, 'show']);
+        Route::put('/profile', [\App\Http\Controllers\Api\PortfolioProfileController::class, 'update']);
+        Route::post('/profile/avatar', [\App\Http\Controllers\Api\PortfolioProfileController::class, 'uploadAvatar']);
+
+        // Projects
+        Route::apiResource('projects', \App\Http\Controllers\Api\PortfolioProjectController::class)
+            ->parameters(['projects' => 'portfolioProject']);
+        Route::post('/projects/{portfolioProject}/screenshots', [\App\Http\Controllers\Api\PortfolioProjectController::class, 'uploadScreenshots']);
+
+        // Certificates
+        Route::apiResource('certificates', \App\Http\Controllers\Api\PortfolioCertificateController::class)
+            ->parameters(['certificates' => 'portfolioCertificate']);
+
+        // Experiences
+        Route::apiResource('experiences', \App\Http\Controllers\Api\PortfolioExperienceController::class)
+            ->parameters(['experiences' => 'portfolioExperience']);
+    });
+});
+
+// ==========================================
+// 🌐 Public Portfolio (no auth, read-only)
+// ==========================================
+Route::prefix('public/portfolio')->group(function () {
+    Route::get('/{userId}', function ($userId) {
+        $user = \App\Models\User::findOrFail($userId);
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'profile' => $user->portfolioProfile,
+                'projects' => $user->portfolioProjects()->where('is_visible', true)->orderBy('sort_order')->get(),
+                'certificates' => $user->portfolioCertificates()->where('is_visible', true)->orderBy('sort_order')->get(),
+                'experiences' => $user->portfolioExperiences()->where('is_visible', true)->orderBy('sort_order')->orderByDesc('start_date')->get(),
+            ],
+        ]);
+    });
 });
