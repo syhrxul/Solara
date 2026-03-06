@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\PrayerTimeController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\WeatherController;
+use App\Http\Controllers\Api\StorageController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -52,6 +53,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- Dashboard ---
     Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    // --- Storage ---
+    Route::get('/storage', [StorageController::class, 'index']);
+    Route::post('/storage/upload', [StorageController::class, 'store']);
+    Route::delete('/storage/{file}', [StorageController::class, 'destroy']);
 
     // --- Tasks ---
     Route::apiResource('tasks', TaskController::class);
