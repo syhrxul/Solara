@@ -54,10 +54,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // --- Dashboard ---
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
-    // --- Storage ---
-    Route::get('/storage', [StorageController::class, 'index']);
-    Route::post('/storage/upload', [StorageController::class, 'store']);
-    Route::delete('/storage/{file}', [StorageController::class, 'destroy']);
+    // --- Storage (Renamed to /files to avoid Adblockers) ---
+    Route::get('/files', [StorageController::class, 'index']);
+    Route::post('/files/upload', [StorageController::class, 'store']);
+    Route::delete('/files/{file}', [StorageController::class, 'destroy']);
 
     // --- Tasks ---
     Route::apiResource('tasks', TaskController::class);
