@@ -38,29 +38,35 @@ class StorageController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|max:10240', // max 10MB
+            'files' => 'required|array',
+            'files.*' => 'file', // No size limit, accepts any type
         ]);
 
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $fileName = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
-            
-            $path = $file->storeAs('uploads', $fileName, 'public');
+        $uploadedData = [];
 
-            return response()->json([
-                'success' => true,
-                'message' => 'File uploaded successfully',
-                'data' => [
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $file) {
+                $fileName = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+                
+                $path = $file->storeAs('uploads', $fileName, 'public');
+
+                $uploadedData[] = [
                     'name' => $fileName,
                     'url' => url(Storage::url($path)),
                     'size' => $file->getSize(),
-                ]
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Files uploaded successfully',
+                'data' => $uploadedData
             ], 201);
         }
 
         return response()->json([
             'success' => false,
-            'message' => 'No file uploaded',
+            'message' => 'No files uploaded',
         ], 400);
     }
 
