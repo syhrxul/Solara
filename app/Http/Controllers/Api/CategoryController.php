@@ -16,6 +16,11 @@ class CategoryController extends Controller
     {
         $query = $request->user()->categories()
             ->when($request->type, fn ($q, $t) => $q->where('type', $t))
+            ->when($request->type === 'bank', function($q) {
+                $q->withSum(['bankTransactions as total_income' => fn($sq) => $sq->where('type', 'income')], 'amount')
+                  ->withSum(['bankTransactions as total_expense' => fn($sq) => $sq->where('type', 'expense')], 'amount')
+                  ->withCount('bankTransactions as transaction_count');
+            })
             ->orderBy('name');
 
         return CategoryResource::collection($query->paginate($request->per_page ?? 50))

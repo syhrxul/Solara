@@ -126,11 +126,22 @@ class FinanceTransactionController extends Controller
                 ];
             })->values();
 
+        // Cumulative Balance up to the end of the selected month
+        $totalIncome = $request->user()->financeTransactions()
+            ->where('type', 'income')
+            ->where('transaction_date', '<=', $date->endOfMonth())
+            ->sum('amount');
+            
+        $totalExpense = $request->user()->financeTransactions()
+            ->where('type', 'expense')
+            ->where('transaction_date', '<=', $date->endOfMonth())
+            ->sum('amount');
+
         return $this->success([
             'month'       => $month,
             'income'      => (float) $income,
             'expense'     => (float) $expense,
-            'balance'     => (float) ($income - $expense),
+            'balance'     => (float) ($totalIncome - $totalExpense),
             'by_category' => $byCategory,
         ]);
     }

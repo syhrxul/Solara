@@ -39,6 +39,11 @@ class Category extends Model
         return $this->hasMany(FinanceTransaction::class);
     }
 
+    public function bankTransactions(): HasMany
+    {
+        return $this->hasMany(FinanceTransaction::class, 'bank_id');
+    }
+
     public function goals(): HasMany
     {
         return $this->hasMany(Goal::class);

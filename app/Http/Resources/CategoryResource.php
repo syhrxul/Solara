@@ -15,6 +15,10 @@ class CategoryResource extends JsonResource
             'color' => $this->color,
             'icon'  => $this->icon,
             'type'  => $this->type,
+            'balance' => $this->type === 'bank' ? (float)($this->total_income ?? 0) - (float)($this->total_expense ?? 0) : null,
+            'total_income' => $this->type === 'bank' ? (float)($this->total_income ?? 0) : null,
+            'total_expense' => $this->type === 'bank' ? (float)($this->total_expense ?? 0) : null,
+            'transaction_count' => $this->type === 'bank' ? (int)($this->transaction_count ?? 0) : null,
         ];
     }
 }

@@ -136,9 +136,6 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-// ==========================================
-// 🌐 Public Portfolio (no auth, read-only)
-// ==========================================
 Route::prefix('public/portfolio')->group(function () {
     Route::get('/{userId}', function ($userId) {
         $user = \App\Models\User::findOrFail($userId);
