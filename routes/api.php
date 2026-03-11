@@ -17,6 +17,8 @@ use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\WeatherController;
 use App\Http\Controllers\Api\StorageController;
 use App\Http\Controllers\Api\SystemMonitorController;
+use App\Http\Controllers\Api\SystemCommandController;
+use App\Http\Controllers\Api\SystemShortcutController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -109,11 +111,24 @@ Route::middleware('auth:sanctum')->group(function () {
     // --- Prayer Times (proxy API, no DB) ---
     Route::get('/prayer-times', [PrayerTimeController::class, 'index']);
 
-    // --- System Monitor ---
+    // --- System Monitor & Actions ---
     Route::get('/system-monitor', [SystemMonitorController::class, 'index']);
     Route::get('/system-monitor/latest', [SystemMonitorController::class, 'latest']);
     Route::post('/system-monitor', [SystemMonitorController::class, 'store']);
     Route::delete('/system-monitor/cleanup', [SystemMonitorController::class, 'cleanup']);
+
+    // Polling Actions (Called by Swift)
+    Route::get('/system-actions/pending', [SystemCommandController::class, 'pending']);
+    Route::patch('/system-actions/{id}', [SystemCommandController::class, 'update']);
+    
+    // Command Execution trigger (Called by Dashboard)
+    Route::post('/system-actions/execute', [SystemCommandController::class, 'execute']);
+
+    // Manage UI Shortcuts (Called by Dashboard)
+    Route::get('/system-shortcuts', [SystemShortcutController::class, 'index']);
+    Route::post('/system-shortcuts', [SystemShortcutController::class, 'store']);
+    Route::put('/system-shortcuts/{id}', [SystemShortcutController::class, 'update']);
+    Route::delete('/system-shortcuts/{id}', [SystemShortcutController::class, 'destroy']);
 
     // --- Settings ---
     Route::get('/settings', [SettingsController::class, 'index']);
