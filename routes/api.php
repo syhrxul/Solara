@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\WeatherController;
 use App\Http\Controllers\Api\StorageController;
+use App\Http\Controllers\Api\SystemMonitorController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -107,6 +108,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- Prayer Times (proxy API, no DB) ---
     Route::get('/prayer-times', [PrayerTimeController::class, 'index']);
+
+    // --- System Monitor ---
+    Route::get('/system-monitor', [SystemMonitorController::class, 'index']);
+    Route::get('/system-monitor/latest', [SystemMonitorController::class, 'latest']);
+    Route::post('/system-monitor', [SystemMonitorController::class, 'store']);
+    Route::delete('/system-monitor/cleanup', [SystemMonitorController::class, 'cleanup']);
 
     // --- Settings ---
     Route::get('/settings', [SettingsController::class, 'index']);
