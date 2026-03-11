@@ -43,6 +43,7 @@ class SystemMonitorResource extends JsonResource
                 'seconds' => $this->uptime_seconds,
                 'formatted' => $this->uptime_formatted,
             ],
+            'apps' => $this->running_apps ?? [],
             'recorded_at' => $this->created_at->toISOString(),
         ];
     }

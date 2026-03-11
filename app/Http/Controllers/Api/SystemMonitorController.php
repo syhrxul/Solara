@@ -77,6 +77,8 @@ class SystemMonitorController extends Controller
 
             'uptime.seconds' => 'required|integer',
             'uptime.formatted' => 'required|string',
+
+            'apps' => 'nullable|array',
         ]);
 
         $monitor = SystemMonitor::create([
@@ -108,6 +110,8 @@ class SystemMonitorController extends Controller
 
             'uptime_seconds' => $validated['uptime']['seconds'],
             'uptime_formatted' => $validated['uptime']['formatted'],
+
+            'running_apps' => $validated['apps'] ?? [],
         ]);
 
         return $this->success(new SystemMonitorResource($monitor), 'Data monitor berhasil disimpan', 201);

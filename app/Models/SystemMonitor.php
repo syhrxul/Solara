@@ -16,6 +16,7 @@ class SystemMonitor extends Model
         'disk_total', 'disk_used', 'disk_free', 'disk_usage_percent',
         'net_bytes_in', 'net_bytes_out', 'net_speed_in', 'net_speed_out',
         'uptime_seconds', 'uptime_formatted',
+        'running_apps',
     ];
 
     protected $casts = [
@@ -27,6 +28,7 @@ class SystemMonitor extends Model
         'disk_usage_percent' => 'decimal:2',
         'net_speed_in' => 'decimal:2',
         'net_speed_out' => 'decimal:2',
+        'running_apps' => 'array',
     ];
 
     public function user()
