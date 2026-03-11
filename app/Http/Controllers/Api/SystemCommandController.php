@@ -64,7 +64,7 @@ class SystemCommandController extends Controller
 
         $command->update([
             'status' => $validated['status'],
-            'error_message' => $validated['error_message'],
+            'error_message' => $request->error_message,
         ]);
 
         return $this->success($command, 'Command status updated');
